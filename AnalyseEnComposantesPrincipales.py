@@ -31,7 +31,7 @@ def precison(nbExemplesMalClasses, nbTotalExemples):
     
 #1PPV
 def trainPPV(x, p):
-    return -x[:, len(x)-p : len(x)] 
+    return x[p:,:] 
 
 #ACP
 def reduceMat(X0, X1):
@@ -61,7 +61,7 @@ def predictMoy():
     
     for j in range(XRed1.shape[0]):
         for i in range(0, 10):
-            dist[j][i] = np.sum(np.subtract(XRed1[j],moy[i])*np.subtract(XRed1[j],moy[i])) #dstMahalanobis(X1[j], moy[i])
+            dist[j][i] = np.sum(np.subtract(XRed1[j],moy[i])*np.subtract(XRed1[j],moy[i]))
         
         resultat[j] = np.argmin(dist[j], axis=0)
         
@@ -73,13 +73,13 @@ def predictMoy():
 def predictPPV():
     cpt=0
     nberreur = 0
-    dist = np.zeros((X1.shape[0], 10))
-    resultat = np.zeros(X1.shape[0])
     Xt = trainPPV(X0,100)
+    dist = np.zeros((X1.shape[0], Xt.shape[0]))
+    resultat = np.zeros(X1.shape[0])
     
     for j in range(X1.shape[0]):
-        for i in range(0, 10):
-            dist[j][i] = np.sum(np.subtract(X1[j],Xt[i])*np.subtract(X1[j],Xt[i])) #dstMahalanobis(X1[j], moy[i])
+        for i in range(Xt.shape[0]):
+            dist[j][i] = np.sum(np.subtract(X1[j],Xt[i])*np.subtract(X1[j],Xt[i]))
         
         resultat[j] = np.argmin(dist[j], axis=0)
         
@@ -91,7 +91,6 @@ def predictPPV():
 
 #P, XRed0, XRed1, p = reduceMat(X0, X1)
 #moy = moyenne(XRed0, p)
-trainPPV(X0, 100)
 err = predictPPV()
     
 #Afficher une image individuellement dans sa dimension initiale 10 x 10
