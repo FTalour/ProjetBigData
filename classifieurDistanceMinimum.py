@@ -6,47 +6,61 @@
 import numpy as np
 
 #X0 contient une matrice 10 000 x 784
-X0 = np.load('data\\trn_img.npy')
+X0 = np.load('/home/tristan/Documents/Polytech/Github/ProjetBigData/trn_img.npy')
 
 #lbl0 contient les étiquettes de chacune des images parmi les chiffresde 0 à 9
 #sous forme d'un tableau mono-dimensionnel 10 000 x 1
-lbl0 = np.load('data\\trn_lbl.npy')
+lbl0 = np.load('/home/tristan/Documents/Polytech/Github/ProjetBigData/trn_lbl.npy')
 
+X1 = np.load('/home/tristan/Documents/Polytech/Github/ProjetBigData/dev_img.npy')
 
-#moyenne de chaque ligne
-moy = np.zeros(784)
-for i in range(0, 9):
-    moy = np.average(X0[lbl0 == i], axis=0)
+lbl1 = np.load('/home/tristan/Documents/Polytech/Github/ProjetBigData/dev_lbl.npy')
     
 #covariance = np.cov(moy)
 #diagonale = np.diag(covariance)
-
-#def train():
     
-#def guess():
-    
-
 def dstMahalanobis(x, mu):
-	epsilon = ((x[i]-mu)*((x[i]-mu).T))/np.ndarry.size(x)
-	epsilonInv =  np.linalg.inv(epsilon)
-	return np.transpose(x-mu)*epsilonInv*(x-mu)
+    epsilon = np.zeros(len(x))
+    epsilon = epsilon + ((x-mu)*((x-mu).T))/len(x)
+    epsilonInv =  np.linalg.inv(epsilon)
+    return np.transpose(x-mu)*epsilonInv*(x-mu)
 
-	
 
-#Sort points along the x-coordinate
-#Split the set of points into two equal-sized subsets by a vertical line x = xmid
-#Solve the problem recursively in the left and right subsets. This will give the left-side and right-side minimal distances dLmin and dRmin respectively.
-#Find the minimal distance dLRmin among the pair of points in which one point lies on the left of the dividing vertical and the second point lies to the right.
-#The final answer is the minimum among dLmin, dRmin, and dLRmin."""
+#moyenne de chaque ligne
+def moyenne(x, nbvalues):
+    moy = np.zeros((10,nbvalues))
+    for i in range(0, 10):
+        moy[i] = np.average(x[lbl0 == i,:], axis=0)
+    return moy
+   
 
-#http://www.cs.mcgill.ca/~cs251/ClosestPair/ClosestPairPS.html
+#Performance : Taux erreur
+def precison(nbExemplesMalClasses, nbTotalExemples):
+    return nbExemplesMalClasses/nbTotalExemples   
+   
+moy = moyenne(X0, 784)
+
+#train():
+#guess(): 
+
+#for j in range(X1.shape[0]):
+cpt = 0
+nberreur = 0
+dist = np.zeros((X1.shape[0], 10))
+resultat = np.zeros(X1.shape[0])
+
+for j in X1:
+    for i in range(0, 10):
+        dist[cpt][i] = np.sum(np.subtract(X1[cpt],moy[i])*np.subtract(X1[cpt],moy[i]))
+    resultat[cpt] = np.argmin(dist[cpt], axis=0)
+    if resultat[cpt] != lbl1[cpt]:
+        nberreur = nberreur + 1
+    cpt += 1
+print precison(nberreur*100.0, X1.shape[0])
+
 
 #Afficher une image individuellement dans sa dimension initiale 28 x 28
 import matplotlib.pyplot as plt
 img = X0[0].reshape(28,28)
 plt.imshow(img, plt.cm.gray)
 plt.show()
-
-#Performance : Taux erreur
-def precison(nbExemplesMalClasses, nbTotalExemples):
-    return nbExemplesMalClasses/nbTotalExemples
