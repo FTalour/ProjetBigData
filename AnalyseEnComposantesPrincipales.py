@@ -31,7 +31,7 @@ def precison(nbExemplesMalClasses, nbTotalExemples):
     
 #1PPV
 def trainPPV(x, p):
-    return x[p:,:] 
+    return x[p:len(x),:] 
 
 #ACP
 def reduceMat(X0, X1):
@@ -50,8 +50,8 @@ def reduceMat(X0, X1):
 
     return P, XRed0, XRed1, p
 
-P, XRed0, XRed1, p = reduceMat(X0, X1)
-moy = moyenne(XRed0, p)
+#P, XRed0, XRed1, p = reduceMat(X0, X1)
+#moy = moyenne(XRed0, p)
 
 def predictMoy():
     cpt=0
