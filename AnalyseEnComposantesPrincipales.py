@@ -2,26 +2,28 @@
 """
 Created on Tue Nov 15 18:33:31 2016
 
-@author: tristan
+@author: tristan & florian
 """
 
 import numpy as np
 
-#X0 contient une matrice 10 000 x 784
-X0 = np.load('/home/tristan/Documents/Polytech/Github/ProjetBigData/trn_img.npy')
+#X0 contient une matrice 10 000 collones x 784 lignes
+X0 = np.load('trn_img.npy')
 
-#lbl0 contient les étiquettes de chacune des images parmi les chiffresde 0 à 9
+#lbl0 contient les étiquettes de chacune des images parmi les chiffres de 0 à 9
 #sous forme d'un tableau mono-dimensionnel 10 000 x 1
-lbl0 = np.load('/home/tristan/Documents/Polytech/Github/ProjetBigData/trn_lbl.npy')
+lbl0 = np.load('trn_lbl.npy')
 
-X1 = np.load('/home/tristan/Documents/Polytech/Github/ProjetBigData/dev_img.npy')
+#X1 contient une matrice 5 000 collones x 784 lignes
+X1 = np.load('dev_img.npy')
 
-lbl1 = np.load('/home/tristan/Documents/Polytech/Github/ProjetBigData/dev_lbl.npy')
+#lbl1 contient les étiquettes de chacune des images parmi les chiffres de 0 à 9
+#sous forme d'un tableau mono-dimensionnel 5 000 x 1
+lbl1 = np.load('dev_lbl.npy')
 
 #moyenne de chaque ligne
-def moyenne(x, nbvalues):
-    moy = np.zeros((10,nbvalues))
-    
+def moyenne(x):
+    moy = np.zeros((10, x.shape[1]))
     for i in range(0, 10):
         moy[i] = np.average(x[lbl0 == i,:], axis=0)
     return moy
@@ -29,13 +31,12 @@ def moyenne(x, nbvalues):
 def precison(nbExemplesMalClasses, nbTotalExemples):
     return nbExemplesMalClasses/nbTotalExemples 
     
-#1PPV
+#1PPV obtenir un sous-ensemble de la base d'apprentissage
 def trainPPV(x, p):
     return x[p:len(x),:] 
 
 #ACP
-def reduceMat(X0, X1):
-    p = 100
+def reduceMat(p):
 
     C = np.cov(X0, rowvar=0)
     v,w = np.linalg.eigh(C)
@@ -48,64 +49,84 @@ def reduceMat(X0, X1):
     XRed0 = np.matmul(X0, P)
     XRed1 = np.matmul(X1, P)
 
-    return P, XRed0, XRed1, p
+    return XRed0, XRed1, P
 
-#P, XRed0, XRed1, p = reduceMat(X0, X1)
-#moy = moyenne(XRed0, p)
-
-def predictMoy():
-    cpt=0
-    nberreur = 0
-    dist = np.zeros((X1.shape[0], 10))
-    resultat = np.zeros(X1.shape[0])
+def predictMoy(p):
+   	XRed0, XRed1, P = reduceMat(p)
+   	
+    # entrainement
+	moy = moyenne(XRed0)
     
+    #definition des tableaux
+	dist = np.zeros((X1.shape[0], 10))
+	resultat = np.zeros(X1.shape[0])
+    
+	nberreur = 0
+    
+	#calcul du taux d'erreur
+	for j in range(XRed1.shape[0]):
+		for i in range(0, 10):
+		    dist[j][i] = np.sum(np.subtract(XRed1[j],moy[i])*np.subtract(XRed1[j],moy[i]))
+		
+		resultat[j] = np.argmin(dist[j], axis=0)
+		
+		if resultat[j] != lbl1[j]:
+		    nberreur = nberreur + 1
+		   
+	# affichage du taux d'erreur
+	print ("Taux erreur :", precison(nberreur*100.0, X1.shape[0]), "%")
+            
+def predictPPV(p):
+   	
+   	# soit Xt un sous-ensemble de la base d'apprentissage
+    # Xt = trainPPV(X0,p) # t'es sur de ça ?
+    
+ 	# calcul de la reduction de X0 et X1 pour les obtenir en dimension p
+    XRed0, XRed1, P = reduceMat(p)
+    
+    #definition des tableaux
+    dist = np.zeros((XRed1.shape[0], XRed1.shape[0]))
+    resultat = np.zeros(XRed1.shape[0])
+    
+    print XRed0.shape
+    print XRed1.shape
+    
+    nberreur = 0
+    
+    #calcul du taux d'erreur
     for j in range(XRed1.shape[0]):
-        for i in range(0, 10):
-            dist[j][i] = np.sum(np.subtract(XRed1[j],moy[i])*np.subtract(XRed1[j],moy[i]))
+        for i in range(XRed1.shape[0]):
+            dist[j][i] = np.sum(np.subtract(XRed0[j],XRed1[i])*np.subtract(XRed0[j],XRed1[i]))
         
         resultat[j] = np.argmin(dist[j], axis=0)
         
         if resultat[j] != lbl1[j]:
             nberreur = nberreur + 1
             
-        cpt += 1
-
-def predictPPV():
-    cpt=0
-    nberreur = 0
-    Xt = trainPPV(X0,100)
-    dist = np.zeros((X1.shape[0], Xt.shape[0]))
-    resultat = np.zeros(X1.shape[0])
+	# affichage du taux d'erreur
+    print ("Taux erreur :", precison(nberreur*100.0, X1.shape[0]), "%")
     
-    for j in range(X1.shape[0]):
-        for i in range(Xt.shape[0]):
-            dist[j][i] = np.sum(np.subtract(X1[j],Xt[i])*np.subtract(X1[j],Xt[i]))
-        
-        resultat[j] = np.argmin(dist[j], axis=0)
-        
-        if resultat[j] != lbl1[j]:
-            nberreur = nberreur + 1
-            
-        cpt += 1
-    return nberreur
+def main():
+	# DMIN avec ACP :
+	predictMoy(100)
+	
+	# 1PPV avec ACP
+	predictPPV(100)
+		
+	#Afficher une image individuellement dans sa dimension initiale 10 x 10
+	#import matplotlib.pyplot as plt
+	#img = XRed0[0].reshape(p/10,10)
+	#plt.imshow(img, plt.cm.gray)
+	#plt.show()
 
-#P, XRed0, XRed1, p = reduceMat(X0, X1)
-#moy = moyenne(XRed0, p)
-err = predictPPV()
-    
-#Afficher une image individuellement dans sa dimension initiale 10 x 10
-import matplotlib.pyplot as plt
-img = XRed0[0].reshape(p/10,10)
-plt.imshow(img, plt.cm.gray)
-plt.show()
+	#Afficher une image individuellement dans sa dimension initiale 28 x 28
+	#img = X0[0].reshape(28,28)
+	#plt.imshow(img, plt.cm.gray)
+	#plt.show()
 
-#Afficher une image individuellement dans sa dimension initiale 28 x 28
-img = X0[0].reshape(28,28)
-plt.imshow(img, plt.cm.gray)
-plt.show()    
-    
-print ("Taux erreur :", precison(err*100.0, X1.shape[0]), "%")
-
+#fonction main
+if __name__ == "__main__":
+    main()   
 
 
     
