@@ -33,7 +33,7 @@ def precison(nbExemplesMalClasses, nbTotalExemples):
     
 # 1PPV obtenir un sous-ensemble de la base d'apprentissage, on enlève p valeurs à x
 def trainPPV(x, p):
-    return x[p:len(x),:] 
+    return x[:,:p] 
 
 # ACP
 def reduceMat(p):
@@ -78,15 +78,15 @@ def predictMoy(p):
             
 def predictPPV(p):
    	
-   	# soit Xt un sous-ensemble de la base d'apprentissage
-    Xt = trainPPV(X0,p) # on enlève p valeurs à X0
-    
  	# calcul de la reduction de X0 et X1 pour les obtenir en dimension p
     XRed0, XRed1, P = reduceMat(p)
     
+	# soit un sous-ensemble de la base d'apprentissage
+    # XRed0 = trainPPV(XRed0,p) # on enlève p valeurs à X0
+    
     # definition des tableaux
-    dist = np.zeros((XRed1.shape[0], XRed1.shape[0]))
-    resultat = np.zeros(XRed1.shape[0])
+    dist = np.zeros((X1.shape[0], X1.shape[0]))
+    resultat = np.zeros(X1.shape[0])
     
     nberreur = 0
     
@@ -95,8 +95,8 @@ def predictPPV(p):
     
     # calcul du taux d'erreur
     for j in range(XRed1.shape[0]):
-        for i in range(XRed1.shape[0]):
-            dist[j][i] = np.sum(np.subtract(Xt[j],XRed1[i])*np.subtract(Xt[j],XRed1[i]))
+        for i in range(XRed0.shape[0]):
+            dist[j][i] = np.sum(np.subtract(XRed1[j],XRed0[i])*np.subtract(XRed1[j],XRed0[i]))
         
         resultat[j] = np.argmin(dist[j], axis=0)
         
