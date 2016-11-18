@@ -111,7 +111,7 @@ def main():
     tabPrecision = np.zeros(5000/100)
 
     # 1PPV avec ACP
-    for i in range(0, 5000, 100)
+    for i in range(0, 5000, 100):
         tabPrecision[i] = predictPPV(i)
    
     plt.title("Taux d'erreur de detection du chiffre en fonction du nombre de vecteurs conservé")
