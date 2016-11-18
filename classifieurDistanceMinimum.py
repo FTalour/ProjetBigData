@@ -18,7 +18,7 @@ lbl0 = np.load('trn_lbl.npy')
 X1 = np.load('dev_img.npy')
 
 # lbl1 contient les étiquettes de chacune des images parmi les chiffres de 0 à 9
-#sous forme d'un tableau mono-dimensionnel 5 000 x 1
+# sous forme d'un tableau mono-dimensionnel 5 000 x 1
 lbl1 = np.load('dev_lbl.npy')
 
 def dstMahalanobis(x, mu):
@@ -28,7 +28,7 @@ def dstMahalanobis(x, mu):
     return np.transpose(x-mu)*epsilonInv*(x-mu)
 
 
-#moyenne de chaque ligne
+# moyenne de chaque ligne
 def moyenne(x):
     moy = np.zeros((10, x.shape[1]))
     for i in range(0, 10):
@@ -36,7 +36,7 @@ def moyenne(x):
     return moy
    
 
-#Performance : Taux erreur
+# Performance : Taux erreur
 def precison(nbExemplesMalClasses, nbTotalExemples):
     return nbExemplesMalClasses/nbTotalExemples  
     
@@ -72,13 +72,13 @@ def main():
 		
 	print("Le pourcentage d'erreur est de : ", precison(nberreur*100.0, X1.shape[0]), "%")
 
-	#Afficher une image individuellement dans sa dimension initiale 28 x 28
+	# Afficher une image individuellement dans sa dimension initiale 28 x 28
 	#import matplotlib.pyplot as plt
 	#img = X0[0].reshape(28,28)
 	#plt.imshow(img, plt.cm.gray)
 	#plt.show() 
     
-#fonction main
+# Fonction main
 if __name__ == "__main__":
     main()    
 
