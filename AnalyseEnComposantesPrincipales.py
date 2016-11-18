@@ -52,38 +52,37 @@ def reduceMat(p):
     return XRed0, XRed1, P
 
 def predictMoy(p):
-   	XRed0, XRed1, P = reduceMat(p)
-   	
+    XRed0, XRed1, P = reduceMat(p)
+
     # entrainement
-	moy = moyenne(XRed0)
-    
+    moy = moyenne(XRed0)
+
     # definition des tableaux
-	dist = np.zeros((X1.shape[0], 10))
-	resultat = np.zeros(X1.shape[0])
+    dist = np.zeros((X1.shape[0], 10))
+    resultat = np.zeros(X1.shape[0])
     
-	nberreur = 0
-    
-	# calcul du taux d'erreur
-	for j in range(XRed1.shape[0]):
-		for i in range(0, 10):
-		    dist[j][i] = np.sum(np.subtract(XRed1[j],moy[i])*np.subtract(XRed1[j],moy[i]))
+    nberreur = 0
+    # calcul du taux d'erreur
+    for j in range(XRed1.shape[0]):
+	for i in range(0, 10):
+            dist[j][i] = np.sum(np.subtract(XRed1[j],moy[i])*np.subtract(XRed1[j],moy[i]))
 		
-		resultat[j] = np.argmin(dist[j], axis=0)
+	resultat[j] = np.argmin(dist[j], axis=0)
 		
-		if resultat[j] != lbl1[j]:
-		    nberreur = nberreur + 1
+	if resultat[j] != lbl1[j]:
+            nberreur = nberreur + 1
 		   
 	# affichage du taux d'erreur
 	print ("Taux erreur :", precison(nberreur*100.0, XRed1.shape[0]), "%")
-	print precison(nberreur*100.0, XRed1.shape[0])
+	return precison(nberreur*100.0, XRed1.shape[0])
             
 def predictPPV(p):
    	
- 	# calcul de la reduction de X0 et X1 pour les obtenir en dimension p
+    # calcul de la reduction de X0 et X1 pour les obtenir en dimension p
     XRed0, XRed1, P = reduceMat(p)
     
-	# soit un sous-ensemble de la base d'apprentissage
-    # XRed0 = trainPPV(XRed0,p) # on enlève p valeurs à X0
+    # soit un sous-ensemble de la base d'apprentissage
+    #XRed0 = trainPPV(XRed0,p) # on enlève p valeurs à X0
     
     # definition des tableaux
     dist = np.zeros((X1.shape[0], X0.shape[0]))
@@ -102,29 +101,40 @@ def predictPPV(p):
         if resultat[j] != lbl1[j]:
             nberreur = nberreur + 1
             
-	# affichage du taux d'erreur
+    # affichage du taux d'erreur
     print ("Taux erreur :", precison(nberreur*100.0, XRed1.shape[0]), "%")
+    
     return precison(nberreur*100.0, XRed1.shape[0])
-    
-def main():
-	# DMIN avec ACP :
-	#res = predictMoy(100)
-	
-	# 1PPV avec ACP
-	res = predictPPV(100)
- 
-	np.save('test-1nn', res)
-    
-	# Afficher une image individuellement
-	#import matplotlib.pyplot as plt
-	#img = XRed0[0].reshape(p/10,10)
-	#plt.imshow(img, plt.cm.gray)
-	#plt.show()
 
-	# Afficher une image individuellement dans sa dimension initiale 28 x 28
-	#img = X0[0].reshape(28,28)
-	#plt.imshow(img, plt.cm.gray)
-	#plt.show()
+def main():
+
+    import matplotlib.pyplot as plt    
+    
+    # DMIN avec ACP :
+    #res = predictMoy(100)
+
+    tabPrecision = np.zeros(5000/100)
+
+    # 1PPV avec ACP
+    for i in range(100, 5000, 500):
+        tabPrecision[i] = predictPPV(i)
+   
+    plt.title("Taux d'erreur de detection du chiffre en fonction du nombre de vecteurs conservé")
+    plt.plot(tabPrecision)
+    plt.ylabel("Taux d'erreur")
+    plt.xlabel("Taille du vecteur choisi")
+    plt.show()
+
+    np.save('test-1nn', tabPrecision)
+    # Afficher une image individuellement
+    #img = XRed0[0].reshape(p/10,10)
+    #plt.imshow(img, plt.cm.gray)
+    #plt.show()
+    
+    # Afficher une image individuellement dans sa dimension initiale 28 x 28
+    #img = X0[0].reshape(28,28)
+    #plt.imshow(img, plt.cm.gray)
+    #plt.show()
 
 #fonction main
 if __name__ == "__main__":

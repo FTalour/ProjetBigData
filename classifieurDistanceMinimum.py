@@ -45,7 +45,7 @@ def main():
 	# diagonale = np.diag(covariance)
 
 	# On calcule la moyenne
-	# moy est la moyenne de la deltaance entre les points de chacun des chiffres
+	# moy est la moyenne de la distance entre les points de chacun des chiffres
 	# moy est une matrice de 10 collones et 784 lignes
 	moy = moyenne(X0)
 	
@@ -62,7 +62,7 @@ def main():
 		# pour chaque chiffre on calcule le delta
 		for i in range(0, 10):
 		    delta[j][i] = np.sum(np.subtract(X1[j],moy[i])*np.subtract(X1[j],moy[i]))
-		resultat[j] = np.argmin(delta[j], axis=0)
+                resultat[j] = np.argmin(delta[j], axis=0)
 		
 		# on compte les erreurs
 		res1 = resultat[j]
