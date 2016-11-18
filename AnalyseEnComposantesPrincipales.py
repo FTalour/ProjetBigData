@@ -96,7 +96,6 @@ def predictPPV(p):
             dist[j][i] = np.sum(np.subtract(XRed1[j],XRed0[i])*np.subtract(XRed1[j],XRed0[i]))
         
         resultat[j] = lbl0[np.argmin(dist[j], axis=0)]
-        print resultat[j]
         
         if resultat[j] != lbl1[j]:
             nberreur = nberreur + 1
@@ -108,24 +107,26 @@ def predictPPV(p):
 
 def main():
 
-    import matplotlib.pyplot as plt    
+    #import matplotlib.pyplot as plt    
     
     # DMIN avec ACP :
     #res = predictMoy(100)
 
-    tabPrecision = np.zeros(5000/100)
+    # 1PPV avec 1 ACP
+    res = predictPPV(100)
 
-    # 1PPV avec ACP
-    for i in range(100, 5000, 500):
-        tabPrecision[i] = predictPPV(i)
+    # 1PPV avec plusieurs ACP
+    #tabPrecision = np.zeros(5000/100)
+    #for i in range(100, 5000, 500):
+    #    tabPrecision[i] = predictPPV(i)
    
-    plt.title("Taux d'erreur de detection du chiffre en fonction du nombre de vecteurs conservé")
-    plt.plot(tabPrecision)
-    plt.ylabel("Taux d'erreur")
-    plt.xlabel("Taille du vecteur choisi")
-    plt.show()
+    #plt.title("Taux d'erreur de detection du chiffre en fonction du nombre de vecteurs conservé")
+    #plt.plot(tabPrecision)
+    #plt.ylabel("Taux d'erreur")
+    #plt.xlabel("Taille du vecteur choisi")
+    #plt.show()
 
-    np.save('test-1nn', tabPrecision)
+    np.save('test-1nn', res)
     # Afficher une image individuellement
     #img = XRed0[0].reshape(p/10,10)
     #plt.imshow(img, plt.cm.gray)
