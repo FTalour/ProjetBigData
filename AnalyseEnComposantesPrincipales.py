@@ -72,8 +72,9 @@ def predictMoy(p):
 	if resultat[j] != lbl1[j]:
             nberreur = nberreur + 1
 		   
-    # affichage du taux d'erreur
-    print ("Taux erreur :", precison(nberreur*100.0, XRed1.shape[0]), "%")
+	# affichage du taux d'erreur
+	print ("Taux erreur :", precison(nberreur*100.0, XRed1.shape[0]), "%")
+	return precison(nberreur*100.0, XRed1.shape[0])
             
 def predictPPV(p):
    	
@@ -94,7 +95,8 @@ def predictPPV(p):
         for i in range(XRed0.shape[0]):
             dist[j][i] = np.sum(np.subtract(XRed1[j],XRed0[i])*np.subtract(XRed1[j],XRed0[i]))
         
-        resultat[j] = np.argmin(dist[j], axis=0)
+        resultat[j] = lbl0[np.argmin(dist[j], axis=0)]
+        print resultat[j]
         
         if resultat[j] != lbl1[j]:
             nberreur = nberreur + 1
@@ -105,13 +107,16 @@ def predictPPV(p):
     return precison(nberreur*100.0, XRed1.shape[0])
 
 def main():
+
+    import matplotlib.pyplot as plt    
+    
     # DMIN avec ACP :
-    #predictMoy(100)
+    #res = predictMoy(100)
 
     tabPrecision = np.zeros(5000/100)
 
     # 1PPV avec ACP
-    for i in range(0, 5000, 100):
+    for i in range(20, 200, 20):
         tabPrecision[i] = predictPPV(i)
    
     plt.title("Taux d'erreur de detection du chiffre en fonction du nombre de vecteurs conservé")
@@ -120,8 +125,8 @@ def main():
     plt.xlabel("Taille du vecteur choisi")
     plt.show()
 
+    np.save('test-1nn', tabPrecision)
     # Afficher une image individuellement
-    #import matplotlib.pyplot as plt
     #img = XRed0[0].reshape(p/10,10)
     #plt.imshow(img, plt.cm.gray)
     #plt.show()
