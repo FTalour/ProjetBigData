@@ -75,6 +75,7 @@ def predictMoy(p):
 		   
 	# affichage du taux d'erreur
 	print ("Taux erreur :", precison(nberreur*100.0, XRed1.shape[0]), "%")
+	print precison(nberreur*100.0, XRed1.shape[0])
             
 def predictPPV(p):
    	
@@ -85,34 +86,35 @@ def predictPPV(p):
     # XRed0 = trainPPV(XRed0,p) # on enlève p valeurs à X0
     
     # definition des tableaux
-    dist = np.zeros((X1.shape[0], X1.shape[0]))
+    dist = np.zeros((X1.shape[0], X0.shape[0]))
     resultat = np.zeros(X1.shape[0])
     
     nberreur = 0
-    
-    # on obtient 100% d'erreur parceque l'algorithme n'est pas le bon à mon avis
-    # voir si dans le cours il y a quelque chose sur PPV ou demander à Vincent
     
     # calcul du taux d'erreur
     for j in range(XRed1.shape[0]):
         for i in range(XRed0.shape[0]):
             dist[j][i] = np.sum(np.subtract(XRed1[j],XRed0[i])*np.subtract(XRed1[j],XRed0[i]))
         
-        resultat[j] = np.argmin(dist[j], axis=0)
+        resultat[j] = lbl0[np.argmin(dist[j], axis=0)]
+        print resultat[j]
         
         if resultat[j] != lbl1[j]:
             nberreur = nberreur + 1
             
 	# affichage du taux d'erreur
     print ("Taux erreur :", precison(nberreur*100.0, XRed1.shape[0]), "%")
+    return precison(nberreur*100.0, XRed1.shape[0])
     
 def main():
 	# DMIN avec ACP :
-	#predictMoy(100)
+	#res = predictMoy(100)
 	
 	# 1PPV avec ACP
-	predictPPV(100)
-		
+	res = predictPPV(100)
+ 
+	np.save('test-1nn', res)
+    
 	# Afficher une image individuellement
 	#import matplotlib.pyplot as plt
 	#img = XRed0[0].reshape(p/10,10)
