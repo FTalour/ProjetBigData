@@ -6,6 +6,7 @@ Created on Tue Nov 15 18:33:31 2016
 """
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 # X0 contient une matrice 10 000 collones x 784 lignes
 X0 = np.load('trn_img.npy')
@@ -64,13 +65,13 @@ def predictMoy(p):
     nberreur = 0
     # calcul du taux d'erreur
     for j in range(XRed1.shape[0]):
-	for i in range(0, 10):
-            dist[j][i] = np.sum(np.subtract(XRed1[j],moy[i])*np.subtract(XRed1[j],moy[i]))
+		for i in range(0, 10):
+			dist[j][i] = np.sum(np.subtract(XRed1[j],moy[i])*np.subtract(XRed1[j],moy[i]))
 		
-	resultat[j] = np.argmin(dist[j], axis=0)
-		
-	if resultat[j] != lbl1[j]:
-            nberreur = nberreur + 1
+		resultat[j] = np.argmin(dist[j], axis=0)
+
+		if resultat[j] != lbl1[j]:
+				nberreur = nberreur + 1
 		   
 	# affichage du taux d'erreur
 	print ("Taux erreur :", precison(nberreur*100.0, XRed1.shape[0]), "%")
@@ -105,35 +106,35 @@ def predictPPV(p):
     
     return precison(nberreur*100.0, XRed1.shape[0])
 
-def main():
+def main():    
 
-    import matplotlib.pyplot as plt    
-    
-    # DMIN avec ACP :
-    #res = predictMoy(100)
+	# DMIN avec ACP :
+	#res = predictMoy(100)
 
-    tabPrecision = np.zeros(5000/100)
+	# 1PPV avec 1 ACP
+	res = predictPPV(100)
 
-    # 1PPV avec ACP
-    for i in range(20, 200, 20):
-        tabPrecision[i] = predictPPV(i)
-   
-    plt.title("Taux d'erreur de detection du chiffre en fonction du nombre de vecteurs conservé")
-    plt.plot(tabPrecision)
-    plt.ylabel("Taux d'erreur")
-    plt.xlabel("Taille du vecteur choisi")
-    plt.show()
+	# 1PPV avec plusieurs ACP
+	#tabPrecision = np.zeros(5000/100)
+	#for i in range(100, 5000, 500):
+	#    tabPrecision[i/100] = predictPPV(i)
 
-    np.save('test-1nn', tabPrecision)
-    # Afficher une image individuellement
-    #img = XRed0[0].reshape(p/10,10)
-    #plt.imshow(img, plt.cm.gray)
-    #plt.show()
-    
-    # Afficher une image individuellement dans sa dimension initiale 28 x 28
-    #img = X0[0].reshape(28,28)
-    #plt.imshow(img, plt.cm.gray)
-    #plt.show()
+	#plt.title("Taux d'erreur de detection du chiffre en fonction du nombre de vecteurs conservé")
+	#plt.plot(tabPrecision)
+	#plt.ylabel("Taux d'erreur")
+	#plt.xlabel("Taille du vecteur choisi")
+	#plt.show()
+
+	np.save('test-1nn', res)
+	# Afficher une image individuellement
+	#img = XRed0[0].reshape(p/10,10)
+	#plt.imshow(img, plt.cm.gray)
+	#plt.show()
+
+	# Afficher une image individuellement dans sa dimension initiale 28 x 28
+	#img = X0[0].reshape(28,28)
+	#plt.imshow(img, plt.cm.gray)
+	#plt.show()
 
 #fonction main
 if __name__ == "__main__":
