@@ -6,6 +6,7 @@ Created on Tue Nov 15 18:33:31 2016
 """
 
 import numpy as np
+import matplotlib.pyplot as plt 
 
 # X0 contient une matrice 10 000 collones x 784 lignes
 X0 = np.load('trn_img.npy')
@@ -28,7 +29,7 @@ def moyenne(x):
         moy[i] = np.average(x[lbl0 == i,:], axis=0)
     return moy
 
-def precison(nbExemplesMalClasses, nbTotalExemples):
+def precision(nbExemplesMalClasses, nbTotalExemples):
     return nbExemplesMalClasses/nbTotalExemples 
     
 # 1PPV obtenir un sous-ensemble de la base d'apprentissage, on enlève p valeurs à x
@@ -53,28 +54,30 @@ def reduceMat(p):
 
 def predictMoy(p):
     XRed0, XRed1, P = reduceMat(p)
-
+    
     # entrainement
     moy = moyenne(XRed0)
 
     # definition des tableaux
     dist = np.zeros((X1.shape[0], 10))
-    resultat = np.zeros(X1.shape[0])
-    
+    resultat = np.zeros(X1.shape[0], dtype = np.int)
+
     nberreur = 0
     # calcul du taux d'erreur
     for j in range(XRed1.shape[0]):
-	for i in range(0, 10):
+        for i in range(0, 10):
             dist[j][i] = np.sum(np.subtract(XRed1[j],moy[i])*np.subtract(XRed1[j],moy[i]))
-		
-	resultat[j] = np.argmin(dist[j], axis=0)
-		
-	if resultat[j] != lbl1[j]:
+        		
+        resultat[j] = np.argmin(dist[j], axis=0)
+	
+        if resultat[j] != lbl1[j]:
             nberreur = nberreur + 1
-		   
-	# affichage du taux d'erreur
-	print ("Taux erreur :", precison(nberreur*100.0, XRed1.shape[0]), "%")
-	return precison(nberreur*100.0, XRed1.shape[0])
+            
+    
+
+    # affichage du taux d'erreur
+    print("Taux erreur :", precision(nberreur*100.0, XRed1.shape[0])," %")
+    return precision(nberreur*100.0, XRed1.shape[0]), resultat
             
 def predictPPV(p):
    	
@@ -86,7 +89,7 @@ def predictPPV(p):
     
     # definition des tableaux
     dist = np.zeros((X1.shape[0], X0.shape[0]))
-    resultat = np.zeros(X1.shape[0])
+    resultat = np.zeros(X1.shape[0], dtype = np.int)
     
     nberreur = 0
     
@@ -101,19 +104,24 @@ def predictPPV(p):
             nberreur = nberreur + 1
             
     # affichage du taux d'erreur
-    print ("Taux erreur :", precison(nberreur*100.0, XRed1.shape[0]), "%")
+    print ("Taux erreur :", precision(nberreur*100.0, XRed1.shape[0]), "%")
     
-    return precison(nberreur*100.0, XRed1.shape[0])
+    return precision(nberreur*100.0, XRed1.shape[0]), resultat
 
-def main():
-
-    #import matplotlib.pyplot as plt    
+def confmat(true, pred, dim = 10):
+    z = dim*true + pred
+    zcount = np.bincount(z, minlength = dim*dim)
     
+    print zcount.reshape(dim,dim)
+
+def main():   
     # DMIN avec ACP :
-    #res = predictMoy(100)
+    res, prediction = predictMoy(100)
+    confmat(lbl1, prediction)
 
     # 1PPV avec 1 ACP
-    res = predictPPV(100)
+    #res, prediction = predictPPV(100)
+    #confmat(lbl1, prediction, max(prediction))
 
     # 1PPV avec plusieurs ACP
     #tabPrecision = np.zeros(5000/100)
