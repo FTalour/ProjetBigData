@@ -96,7 +96,6 @@ def predictPPV(p):
             dist[j][i] = np.sum(np.subtract(XRed1[j],XRed0[i])*np.subtract(XRed1[j],XRed0[i]))
         
         resultat[j] = lbl0[np.argmin(dist[j], axis=0)]
-        print resultat[j]
         
         if resultat[j] != lbl1[j]:
             nberreur = nberreur + 1
