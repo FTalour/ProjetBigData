@@ -2,25 +2,25 @@
 """
 Created on Tue Nov 15 18:33:31 2016
 
-@author: tristan & florian
+@author: Tristan Le Nair & Florian Talour
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 # X0 contient une matrice 10 000 collones x 784 lignes
-X0 = np.load('trn_img.npy')
+X0 = np.load('data/trn_img.npy')
 
 # lbl0 contient les étiquettes de chacune des images parmi les chiffres de 0 à 9
 # sous forme d'un tableau mono-dimensionnel 10 000 x 1
-lbl0 = np.load('trn_lbl.npy')
+lbl0 = np.load('data/trn_lbl.npy')
 
 # X1 contient une matrice 5 000 collones x 784 lignes
-X1 = np.load('dev_img.npy')
+X1 = np.load('data/dev_img.npy')
 
 # lbl1 contient les étiquettes de chacune des images parmi les chiffres de 0 à 9
 # sous forme d'un tableau mono-dimensionnel 5 000 x 1
-lbl1 = np.load('dev_lbl.npy')
+lbl1 = np.load('data/dev_lbl.npy')
 
 # moyenne de chaque ligne
 def moyenne(x):
