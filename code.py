@@ -29,7 +29,7 @@ def moyenne(x):
         moy[i] = np.average(x[lbl0 == i,:], axis=0)
     return moy
 
-def precison(nbExemplesMalClasses, nbTotalExemples):
+def precision(nbExemplesMalClasses, nbTotalExemples):
     return nbExemplesMalClasses/nbTotalExemples 
     
 # 1PPV obtenir un sous-ensemble de la base d'apprentissage, on enlève p valeurs à x
@@ -54,28 +54,31 @@ def reduceMat(p):
 
 def predictMoy(p):
     XRed0, XRed1, P = reduceMat(p)
-
+    
     # entrainement
     moy = moyenne(XRed0)
 
     # definition des tableaux
     dist = np.zeros((X1.shape[0], 10))
-    resultat = np.zeros(X1.shape[0])
-    
+    resultat = np.zeros(X1.shape[0], dtype = np.int)
+
     nberreur = 0
     # calcul du taux d'erreur
     for j in range(XRed1.shape[0]):
-		for i in range(0, 10):
-			dist[j][i] = np.sum(np.subtract(XRed1[j],moy[i])*np.subtract(XRed1[j],moy[i]))
-		
-		resultat[j] = np.argmin(dist[j], axis=0)
 
-		if resultat[j] != lbl1[j]:
-				nberreur = nberreur + 1
-		   
-	# affichage du taux d'erreur
-	print ("Taux erreur :", precison(nberreur*100.0, XRed1.shape[0]), "%")
-	return precison(nberreur*100.0, XRed1.shape[0])
+        for i in range(0, 10):
+            dist[j][i] = np.sum(np.subtract(XRed1[j],moy[i])*np.subtract(XRed1[j],moy[i]))
+        		
+        resultat[j] = np.argmin(dist[j], axis=0)
+	
+        if resultat[j] != lbl1[j]:
+            nberreur = nberreur + 1
+            
+    
+
+    # affichage du taux d'erreur
+    print("Taux erreur :", precision(nberreur*100.0, XRed1.shape[0])," %")
+    return precision(nberreur*100.0, XRed1.shape[0]), resultat
             
 def predictPPV(p):
    	
@@ -87,7 +90,7 @@ def predictPPV(p):
     
     # definition des tableaux
     dist = np.zeros((X1.shape[0], X0.shape[0]))
-    resultat = np.zeros(X1.shape[0])
+    resultat = np.zeros(X1.shape[0], dtype = np.int)
     
     nberreur = 0
     
@@ -102,39 +105,46 @@ def predictPPV(p):
             nberreur = nberreur + 1
             
     # affichage du taux d'erreur
-    print ("Taux erreur :", precison(nberreur*100.0, XRed1.shape[0]), "%")
+    print ("Taux erreur :", precision(nberreur*100.0, XRed1.shape[0]), "%")
     
-    return precison(nberreur*100.0, XRed1.shape[0])
+    return precision(nberreur*100.0, XRed1.shape[0]), resultat
 
-def main():    
+def confmat(true, pred, dim = 10):
+    z = dim*true + pred
+    zcount = np.bincount(z, minlength = dim*dim)
+    
+    print zcount.reshape(dim,dim)
 
-	# DMIN avec ACP :
-	#res = predictMoy(100)
+def main():   
+    # DMIN avec ACP :
+    res, prediction = predictMoy(100)
+    confmat(lbl1, prediction)
 
-	# 1PPV avec 1 ACP
-	res = predictPPV(100)
+    # 1PPV avec 1 ACP
+    #res, prediction = predictPPV(100)
+    #confmat(lbl1, prediction, max(prediction))
 
-	# 1PPV avec plusieurs ACP
-	#tabPrecision = np.zeros(5000/100)
-	#for i in range(100, 5000, 500):
-	#    tabPrecision[i/100] = predictPPV(i)
+    # 1PPV avec plusieurs ACP
+    #tabPrecision = np.zeros(5000/100)
+    #for i in range(100, 5000, 500):
+    #    tabPrecision[i/100] = predictPPV(i)
+   
+    #plt.title("Taux d'erreur de detection du chiffre en fonction du nombre de vecteurs conservé")
+    #plt.plot(tabPrecision)
+    #plt.ylabel("Taux d'erreur")
+    #plt.xlabel("Taille du vecteur choisi")
+    #plt.show()
 
-	#plt.title("Taux d'erreur de detection du chiffre en fonction du nombre de vecteurs conservé")
-	#plt.plot(tabPrecision)
-	#plt.ylabel("Taux d'erreur")
-	#plt.xlabel("Taille du vecteur choisi")
-	#plt.show()
-
-	np.save('test-1nn', res)
-	# Afficher une image individuellement
-	#img = XRed0[0].reshape(p/10,10)
-	#plt.imshow(img, plt.cm.gray)
-	#plt.show()
-
-	# Afficher une image individuellement dans sa dimension initiale 28 x 28
-	#img = X0[0].reshape(28,28)
-	#plt.imshow(img, plt.cm.gray)
-	#plt.show()
+    np.save('test-1nn', res)
+    # Afficher une image individuellement
+    #img = XRed0[0].reshape(p/10,10)
+    #plt.imshow(img, plt.cm.gray)
+    #plt.show()
+    
+    # Afficher une image individuellement dans sa dimension initiale 28 x 28
+    #img = X0[0].reshape(28,28)
+    #plt.imshow(img, plt.cm.gray)
+    #plt.show()
 
 #fonction main
 if __name__ == "__main__":
