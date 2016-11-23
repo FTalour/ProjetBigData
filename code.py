@@ -6,7 +6,7 @@ Created on Tue Nov 15 18:33:31 2016
 """
 
 import numpy as np
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 # X0 contient une matrice 10 000 collones x 784 lignes
 X0 = np.load('data/trn_img.npy')
@@ -22,16 +22,21 @@ X1 = np.load('data/dev_img.npy')
 # sous forme d'un tableau mono-dimensionnel 5 000 x 1
 lbl1 = np.load('data/dev_lbl.npy')
 
+
+
+def precision(nbExemplesMalClasses, nbTotalExemples):
+    return nbExemplesMalClasses/nbTotalExemples 
+    
+def printErr(nbErreur, size):
+	print("Taux erreur : {0}".format(precision(nbErreur*100.0, size)), '%')
+    
 # moyenne de chaque ligne
 def moyenne(x):
     moy = np.zeros((10, x.shape[1]))
     for i in range(0, 10):
         moy[i] = np.average(x[lbl0 == i,:], axis=0)
-    return moy
+    return moy    
 
-def precision(nbExemplesMalClasses, nbTotalExemples):
-    return nbExemplesMalClasses/nbTotalExemples 
-    
 # 1PPV obtenir un sous-ensemble de la base d'apprentissage, on enlève p valeurs à x
 def trainPPV(x, p):
     return x[:,:p] 
@@ -52,34 +57,31 @@ def reduceMat(p):
 
     return XRed0, XRed1, P
 
+# prediction de classes par la moyenne
 def predictMoy(p):
-    XRed0, XRed1, P = reduceMat(p)
-    
-    # entrainement
-    moy = moyenne(XRed0)
+	XRed0, XRed1, P = reduceMat(p)
 
-    # definition des tableaux
-    dist = np.zeros((X1.shape[0], 10))
-    resultat = np.zeros(X1.shape[0], dtype = np.int)
+	# entrainement
+	moy = moyenne(XRed0)
 
-    nberreur = 0
-    # calcul du taux d'erreur
-    for j in range(XRed1.shape[0]):
-
-        for i in range(0, 10):
-            dist[j][i] = np.sum(np.subtract(XRed1[j],moy[i])*np.subtract(XRed1[j],moy[i]))
-        		
-        resultat[j] = np.argmin(dist[j], axis=0)
+	# definition des tableaux
+	dist = np.zeros((10, X1.shape[0]))
+	resultat = np.zeros(X1.shape[0], dtype = np.int)
 	
-        if resultat[j] != lbl1[j]:
-            nberreur = nberreur + 1
+	nberreur = 0
+	# calcul du taux d'erreur
+	for i in range(0, 10):
+		temp = np.subtract(XRed1,moy[i])*np.subtract(XRed1,moy[i])
+		dist[i] = np.sum(temp, axis=1)
             
-    
+	resultat = np.argmin(dist, axis = 0)
+	nberreur = sum(resultat != lbl1)
 
-    # affichage du taux d'erreur
-    print("Taux erreur :", precision(nberreur*100.0, XRed1.shape[0])," %")
-    return precision(nberreur*100.0, XRed1.shape[0]), resultat
-            
+	# affichage du taux d'erreur
+	printErr(nberreur, XRed1.shape[0])
+	return precision(nberreur*100, XRed1.shape[0]), resultat
+
+# prediction de classes par le plus proche voisin
 def predictPPV(p):
    	
     # calcul de la reduction de X0 et X1 pour les obtenir en dimension p
@@ -94,35 +96,37 @@ def predictPPV(p):
     
     nberreur = 0
     
+    dist = np.zeros((X0.shape[0], X1.shape[0]))
+    
     # calcul du taux d'erreur
-    for j in range(XRed1.shape[0]):
-        for i in range(XRed0.shape[0]):
-            dist[j][i] = np.sum(np.subtract(XRed1[j],XRed0[i])*np.subtract(XRed1[j],XRed0[i]))
-        
-        resultat[j] = lbl0[np.argmin(dist[j], axis=0)]
-        
-        if resultat[j] != lbl1[j]:
-            nberreur = nberreur + 1
+    for i in range(XRed0.shape[0]):
+        temp = np.subtract(XRed1, XRed0[i])*np.subtract(XRed1, XRed0[i])
+        dist[i] = np.sum(temp, axis = 1)
+    
+            
+    resultat = lbl0[np.argmin(dist, axis = 0)]
+    nberreur = sum(resultat != lbl1)
             
     # affichage du taux d'erreur
-    print ("Taux erreur :", precision(nberreur*100.0, XRed1.shape[0]), "%")
+    printErr(nberreur, XRed1.shape[0])
     
-    return precision(nberreur*100.0, XRed1.shape[0]), resultat
+    return precision(nberreur*100, XRed1.shape[0]), resultat
 
-def confmat(true, pred, dim = 10):
+def confmat(true, pred):
+    dim = max(pred)+1
     z = dim*true + pred
     zcount = np.bincount(z, minlength = dim*dim)
     
-    print zcount.reshape(dim,dim)
+    print(zcount.reshape(dim,dim))
 
-def main():   
+def main():  
     # DMIN avec ACP :
-    res, prediction = predictMoy(100)
-    confmat(lbl1, prediction)
+    #res, prediction = predictMoy(100)
+    #confmat(lbl1, prediction)
 
     # 1PPV avec 1 ACP
-    #res, prediction = predictPPV(100)
-    #confmat(lbl1, prediction, max(prediction))
+    res, prediction = predictPPV(100)
+    confmat(lbl1, prediction)
 
     # 1PPV avec plusieurs ACP
     #tabPrecision = np.zeros(5000/100)
@@ -135,7 +139,9 @@ def main():
     #plt.xlabel("Taille du vecteur choisi")
     #plt.show()
 
-    np.save('test-1nn', res)
+	# Sauvegarde du meilleur pourcentage
+	#np.save('test-1nn', res)
+    
     # Afficher une image individuellement
     #img = XRed0[0].reshape(p/10,10)
     #plt.imshow(img, plt.cm.gray)
