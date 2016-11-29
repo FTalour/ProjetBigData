@@ -6,7 +6,7 @@ Created on Tue Nov 15 18:33:31 2016
 """
 
 import numpy as np
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 # X0 contient une matrice 10 000 collones x 784 lignes
 X0 = np.load('data/trn_img.npy')
@@ -59,27 +59,27 @@ def reduceMat(p):
 
 # prediction de classes par la moyenne
 def predictMoy(p):
-	XRed0, XRed1, P = reduceMat(p)
+    XRed0, XRed1, P = reduceMat(p)
 
-	# entrainement
-	moy = moyenne(XRed0)
+    # entrainement
+    moy = moyenne(XRed0)
 
-	# definition des tableaux
-	dist = np.zeros((10, X1.shape[0]))
-	resultat = np.zeros(X1.shape[0], dtype = np.int)
-	
-	nberreur = 0
-	# calcul du taux d'erreur
-	for i in range(0, 10):
-		temp = np.subtract(XRed1,moy[i])*np.subtract(XRed1,moy[i])
-		dist[i] = np.sum(temp, axis=1)
+    # definition des tableaux
+    dist = np.zeros((10, X1.shape[0]))
+    resultat = np.zeros(X1.shape[0], dtype = np.int)
+
+    nberreur = 0
+    # calcul du taux d'erreur
+    for i in range(0, 10):
+        temp = np.subtract(XRed1,moy[i])*np.subtract(XRed1,moy[i])
+        dist[i] = np.sum(temp, axis=1)
             
-	resultat = np.argmin(dist, axis = 0)
-	nberreur = sum(resultat != lbl1)
+    resultat = np.argmin(dist, axis = 0)
+    nberreur = sum(resultat != lbl1)
 
-	# affichage du taux d'erreur
-	printErr(nberreur, XRed1.shape[0])
-	return precision(nberreur*100, XRed1.shape[0]), resultat
+    # affichage du taux d'erreur
+    printErr(nberreur, XRed1.shape[0])
+    return precision(nberreur*100, XRed1.shape[0]), resultat
 
 # prediction de classes par le plus proche voisin
 def predictPPV(p):
@@ -125,22 +125,28 @@ def main():
     #confmat(lbl1, prediction)
 
     # 1PPV avec 1 ACP
-    res, prediction = predictPPV(100)
-    confmat(lbl1, prediction)
+    #res, prediction = predictPPV(100)
+    #confmat(lbl1, prediction)
 
     # 1PPV avec plusieurs ACP
-    #tabPrecision = np.zeros(5000/100)
-    #for i in range(100, 5000, 500):
-    #    tabPrecision[i/100] = predictPPV(i)
+    tabPrecision = np.zeros(20)
+    for i in range(10, 130, 20):
+        val = (i-10)/20
+        print("avec ", i, " vecteurs")
+        tabPrecision[val], res = predictPPV(i)
+        
+    #for i in range(500, 5000, 500):
+    #    val = ((i-500)/500)+11
+    #    print("avec ", i, " vecteurs")
+    #    tabPrecision[val], _unused = predictPPV(i)
    
-    #plt.title("Taux d'erreur de detection du chiffre en fonction du nombre de vecteurs conservé")
-    #plt.plot(tabPrecision)
-    #plt.ylabel("Taux d'erreur")
-    #plt.xlabel("Taille du vecteur choisi")
-    #plt.show()
+    plt.plot(tabPrecision)
+    plt.ylabel("Taux d'erreur")
+    plt.xlabel("Taille du vecteur choisi")
+    plt.show()
 
-	# Sauvegarde du meilleur pourcentage
-	#np.save('test-1nn', res)
+    # Sauvegarde du meilleur pourcentage
+    np.save('test-1nn', res)
     
     # Afficher une image individuellement
     #img = XRed0[0].reshape(p/10,10)
