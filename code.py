@@ -96,15 +96,13 @@ def predictPPV(p):
     
     nberreur = 0
     
-    dist = np.zeros((X0.shape[0], X1.shape[0]))
-    
     # calcul du taux d'erreur
-    for i in range(XRed0.shape[0]):
-        temp = np.subtract(XRed1, XRed0[i])*np.subtract(XRed1, XRed0[i])
+    for i in range(XRed1.shape[0]):
+        temp = np.subtract(XRed1[i], XRed0)*np.subtract(XRed1[i], XRed0)
         dist[i] = np.sum(temp, axis = 1)
     
             
-    resultat = lbl0[np.argmin(dist, axis = 0)]
+    resultat = lbl0[np.argmin(dist, axis = 1)]
     nberreur = sum(resultat != lbl1)
             
     # affichage du taux d'erreur
@@ -116,13 +114,30 @@ def confmat(true, pred):
     dim = max(pred)+1
     z = dim*true + pred
     zcount = np.bincount(z, minlength = dim*dim)
+
+    # precision et rappel
+    zcount_reshaped = zcount.reshape(dim,dim)
     
-    print(zcount.reshape(dim,dim))
+    zcount_reshaped_sumcolonne = np.sum(zcount_reshaped, axis=1)
+    zcount_reshaped_sumligne = np.sum(zcount_reshaped, axis=0)
+    
+    for i in range(0,zcount_reshaped_sumcolonne.shape[0]):
+        valeur_precision = np.diag(zcount_reshaped)/float(zcount_reshaped_sumcolonne[i])  # colonne (precision)
+        valeur_rappel = np.diag(zcount_reshaped)/float(zcount_reshaped_sumligne[i])  # ligne (rappel)
+    
+    print("Matrice de confusion")
+    print(zcount_reshaped)
+
+    print("Matrice de precision")
+    print(valeur_precision)
+    
+    print("Matrice de rappel")
+    print(valeur_rappel)
 
 def main():  
     # DMIN avec ACP :
-    #res, prediction = predictMoy(100)
-    #confmat(lbl1, prediction)
+    res, prediction = predictMoy(100)
+    confmat(lbl1, prediction)
 
     # 1PPV avec 1 ACP
     #res, prediction = predictPPV(100)
@@ -130,10 +145,11 @@ def main():
 
     # 1PPV avec plusieurs ACP
     tabPrecision = np.zeros(20)
-    for i in range(10, 130, 20):
-        val = (i-10)/20
+    for i in range(10, 210, 10):
         print("avec ", i, " vecteurs")
-        tabPrecision[val], res = predictPPV(i)
+        tabPrecision[((i-10)/10)], res = predictPPV(i)
+        
+    
         
     #for i in range(500, 5000, 500):
     #    val = ((i-500)/500)+11
@@ -142,7 +158,7 @@ def main():
    
     plt.plot(tabPrecision)
     plt.ylabel("Taux d'erreur")
-    plt.xlabel("Taille du vecteur choisi")
+    plt.xlabel("Taille du vecteur choisi (/10)")
     plt.show()
 
     # Sauvegarde du meilleur pourcentage

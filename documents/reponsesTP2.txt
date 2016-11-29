@@ -1,7 +1,7 @@
 Page 1 Classifier Bayésien Naı̈f
 a) Les variables les moins utiles pour un classifieur bayésion sont les constantes car une variable qui ne change pas selon la classe à laquelle appartient l'objet ne sert à rien. On retrouve ces variables sur les bords de l'image, et principalement dans les coins.
 
-On peut, par exemple, simplement chercher les valeurs constantes et les retirés puisqu'elle ne servent à rien et demandent du calcul inutile. Si on voulait réduire encore plus les dimentions on pourrait donner un intervalle de variation sous lequel on décide de supprimer la dimension.
+On peut, par exemple, simplement chercher les valeurs constantes et les retirés puisqu'elle ne servent à rien et demandent du calcul inutile. Si on voulait réduire encore plus les dimensions on pourrait donner un intervalle de variation sous lequel on décide de supprimer la dimension.
 
 !! Essayer !!
 
