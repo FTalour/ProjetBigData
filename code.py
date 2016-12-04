@@ -155,6 +155,7 @@ def confmat(true, pred):
 
 def main():  
 
+    '''
     # naive_bayes
     from sklearn.naive_bayes import GaussianNB
     gnb = GaussianNB()
@@ -173,9 +174,8 @@ def main():
             % (data.shape[0],(target != y_pred).sum()))
     printErr((target != y_pred).sum(), data.shape[0])
     confmat(target, y_pred)
-
-
     '''
+
     # PPV (ne marche pas)
     from sklearn import neighbors
     n_neighbors = 15
@@ -184,10 +184,10 @@ def main():
     y = lbl0
     Z = clf.fit(X, y).predict(X)
     print("Number of mislabeled points out of a total %d points : %d"
-            % (X.shape[0],(y != y_pred).sum()))
+            % (X.shape[0],(y != Z).sum()))
     printErr((y != Z).sum(), X.shape[0])
-    confmat(y, y_pred)
-    '''
+    confmat(y, Z)
+
     
     '''
     # DMIN normal (sans traitement)
@@ -297,7 +297,7 @@ def main():
     plt.show()
     '''
 
-#fonction main
+# fonction main
 if __name__ == "__main__":
     main()   
 
