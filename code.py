@@ -79,27 +79,26 @@ def predictMoy(trainMat=X0, devMat=X1):
     return precision(nberreur*100, devMat.shape[0]), resultat
 
 # prediction de classes par le plus proche voisin
-def predictPPV(p , trainMat=X0, devMat=X1):
+def predictPPV(trainMat=X0, devMat=X1):
     
     # definition des tableaux
-    dist = np.zeros((X1.shape[0], X0.shape[0]))
-    resultat = np.zeros(X1.shape[0], dtype = np.int)
+    dist = np.zeros((devMat.shape[0], trainMat.shape[0]))
+    resultat = np.zeros(devMat.shape[0], dtype = np.int)
     
     nberreur = 0
     
     # calcul du taux d'erreur
-    for i in range(XRed1.shape[0]):
-        temp = np.subtract(XRed1[i], XRed0)*np.subtract(XRed1[i], XRed0)
+    for i in range(devMat.shape[0]):
+        temp = np.subtract(devMat[i], trainMat)*np.subtract(devMat[i], trainMat)
         dist[i] = np.sum(temp, axis = 1)
     
-            
     resultat = lbl0[np.argmin(dist, axis = 1)]
     nberreur = sum(resultat != lbl1)
             
     # affichage du taux d'erreur
-    printErr(nberreur, XRed1.shape[0])
+    printErr(nberreur, devMat.shape[0])
     
-    return precision(nberreur*100, XRed1.shape[0]), resultat
+    return precision(nberreur*100, devMat.shape[0]), resultat
 
 def supprVarianceInf(val=0, trainMat=X0, devMat=X1):
     # varTrainMat contient les variances d'entrainement (784,)
@@ -178,12 +177,27 @@ def main():
     res, prediction = predictMoy(noConstX0, noConstX1)
     confmat(lbl1, prediction)
     
-    # 1PPV avec 1 ACP
-    # XRed0, XRed1, P = reduceMat(100, X0, X1)
-    #res, prediction = predictPPV(XRed0, XRed1)
-    #confmat(lbl1, prediction)
+    
+    # PPV avec ACP
+    print("PPV avec ACP")
+    XRed0, XRed1, P = reduceMat(100, X0, X1)
+    res, prediction = predictPPV(XRed0, XRed1)
+    confmat(lbl1, prediction)
+    
+    # PPV sans ACP
+    print("PPV sans ACP")
+    res, prediction = predictPPV(XRed0, XRed1)
+    confmat(lbl1, prediction)
+    
+    # DMIN en supprimant les valeurs constantes :
+    print("PPV avec suppression des valeurs constantes")
+    noConstX0, noConstX1 = supprVarianceInf(0, X0, X1)
+    print noConstX0.shape
+    print noConstX1.shape
+    res, prediction = predictPPV(noConstX0, noConstX1)
+    confmat(lbl1, prediction)
 
-    # 1PPV avec plusieurs ACP
+    # PPV avec plusieurs ACP
     #tabPrecision = np.zeros(20)
     #for i in range(10, 210, 10):
     #    print("avec ", i, " vecteurs")
