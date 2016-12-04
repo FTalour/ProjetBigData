@@ -7,6 +7,7 @@ Created on Tue Nov 15 18:33:31 2016
 
 import numpy as np
 import matplotlib.pyplot as plt
+import datetime as dt
 
 # X0 contient une matrice 10 000 collones x 784 lignes
 X0 = np.load('data/trn_img.npy')
@@ -57,6 +58,29 @@ def reduceMat(p):
 
     return XRed0, XRed1, P
 
+def predictMoySimple():
+    
+    # entrainement
+    moy = moyenne(X0)
+
+    # definition des tableaux
+    dist = np.zeros((10, X1.shape[0]))
+    resultat = np.zeros(X1.shape[0], dtype = np.int)
+
+    nberreur = 0
+    # calcul du taux d'erreur
+    for i in range(0, 10):
+        temp = np.subtract(X1,moy[i])*np.subtract(X1,moy[i])
+        dist[i] = np.sum(temp, axis=1)
+            
+    resultat = np.argmin(dist, axis = 0)
+    nberreur = sum(resultat != lbl1)
+
+    # affichage du taux d'erreur
+    printErr(nberreur, X1.shape[0])
+    return precision(nberreur*100, X1.shape[0]), resultat
+
+
 # prediction de classes par la moyenne
 def predictMoy(p):
     XRed0, XRed1, P = reduceMat(p)
@@ -82,6 +106,28 @@ def predictMoy(p):
     return precision(nberreur*100, XRed1.shape[0]), resultat
 
 # prediction de classes par le plus proche voisin
+def predictPPVSimple():
+    
+    # definition des tableaux
+    dist = np.zeros((X1.shape[0], X0.shape[0]))
+    resultat = np.zeros(X1.shape[0], dtype = np.int)
+    
+    nberreur = 0
+    
+    # calcul du taux d'erreur
+    for i in range(X1.shape[0]):
+        temp = np.subtract(X1[i], X0)*np.subtract(X1[i], X0)
+        dist[i] = np.sum(temp, axis = 1)
+    
+            
+    resultat = lbl0[np.argmin(dist, axis = 1)]
+    nberreur = sum(resultat != lbl1)
+            
+    # affichage du taux d'erreur
+    printErr(nberreur, X1.shape[0])
+    
+    return precision(nberreur*100, X1.shape[0]), resultat
+
 def predictPPV(p):
    	
     # calcul de la reduction de X0 et X1 pour les obtenir en dimension p
@@ -135,20 +181,37 @@ def confmat(true, pred):
     print(valeur_rappel)
 
 def main():  
-    # DMIN avec ACP :
-    res, prediction = predictMoy(100)
+    # DMIN sans ACP :
+    #t1 = np.datetime64(dt.datetime.now())
+    #res, prediction = predictMoySimple()
+    #t2 = np.datetime64(dt.datetime.now())
+    #print ("Temps DMIN sans ACP : ", t2 - t1)
+    #confmat(lbl1, prediction)
+    
+    # DMIN avec plusieurs ACP
+    #tabPrecision = np.zeros(20)
+    #for i in range(10, 210, 10):
+    #    print("avec ", i, " vecteurs")
+    #    t5 = np.datetime64(dt.datetime.now())
+    #    tabPrecision[((i-10)/10)], res = predictMoy(i)
+    #    t6 = np.datetime64(dt.datetime.now())
+    #    print ("Temps : ", t6 - t5)
+
+    # 1PPV sans ACP
+    t3 = np.datetime64(dt.datetime.now())
+    res, prediction = predictPPVSimple()
+    t4 = np.datetime64(dt.datetime.now())
+    print ("Temps 1PPV sans ACP : ", t4 - t3)
     confmat(lbl1, prediction)
 
-    # 1PPV avec 1 ACP
-    #res, prediction = predictPPV(100)
-    #confmat(lbl1, prediction)
-
     # 1PPV avec plusieurs ACP
-    tabPrecision = np.zeros(20)
-    for i in range(10, 210, 10):
-        print("avec ", i, " vecteurs")
-        tabPrecision[((i-10)/10)], res = predictPPV(i)
-        
+    #tabPrecision = np.zeros(20)
+    #for i in range(10, 210, 10):
+    #    print("avec ", i, " vecteurs")
+    #    t7 = np.datetime64(dt.datetime.now())
+    #    tabPrecision[((i-10)/10)], res = predictPPV(i)
+    #    t8 = np.datetime64(dt.datetime.now())
+    #    print ("Temps : ", t8 - t7)
     
         
     #for i in range(500, 5000, 500):
@@ -156,13 +219,13 @@ def main():
     #    print("avec ", i, " vecteurs")
     #    tabPrecision[val], _unused = predictPPV(i)
    
-    plt.plot(tabPrecision)
-    plt.ylabel("Taux d'erreur")
-    plt.xlabel("Taille du vecteur choisi (/10)")
-    plt.show()
+    #plt.plot(tabPrecision)
+    #plt.ylabel("Taux d'erreur")
+    #plt.xlabel("Taille du vecteur choisi (/10)")
+    #plt.show()
 
     # Sauvegarde du meilleur pourcentage
-    np.save('test-1nn', res)
+    #np.save('test-1nn', res)
     
     # Afficher une image individuellement
     #img = XRed0[0].reshape(p/10,10)
