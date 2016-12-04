@@ -23,8 +23,6 @@ X1 = np.load('data/dev_img.npy')
 # sous forme d'un tableau mono-dimensionnel 5 000 x 1
 lbl1 = np.load('data/dev_lbl.npy')
 
-
-
 def precision(nbExemplesMalClasses, nbTotalExemples):
     return nbExemplesMalClasses/nbTotalExemples 
     
@@ -43,18 +41,18 @@ def trainPPV(x, p):
     return x[:,:p] 
 
 # ACP
-def reduceMat(p):
+def reduceMat(p, trainMat=X0, devMat=X1):
 
-    C = np.cov(X0, rowvar=0)
+    C = np.cov(trainMat, rowvar=0)
     v,w = np.linalg.eigh(C)
 
     P = -w[:, len(w)-p : len(w)] 
     
-    #X0_prime = np.multiply(X0, v)
-    #X1_prime = np.multiply(X1, v)
+    #trainMat_prime = np.multiply(trainMat, v)
+    #devMat_prime = np.multiply(devMat, v)
     
-    XRed0 = np.matmul(X0, P)
-    XRed1 = np.matmul(X1, P)
+    XRed0 = np.matmul(trainMat, P)
+    XRed1 = np.matmul(devMat, P)
 
     return XRed0, XRed1, P
 
@@ -82,28 +80,27 @@ def predictMoySimple():
 
 
 # prediction de classes par la moyenne
-def predictMoy(p):
-    XRed0, XRed1, P = reduceMat(p)
+def predictMoy(trainMat=X0, devMat=X1):
 
     # entrainement
-    moy = moyenne(XRed0)
+    moy = moyenne(trainMat)
 
     # definition des tableaux
-    dist = np.zeros((10, X1.shape[0]))
-    resultat = np.zeros(X1.shape[0], dtype = np.int)
+    dist = np.zeros((10, devMat.shape[0]))
+    resultat = np.zeros(devMat.shape[0], dtype = np.int)
 
     nberreur = 0
     # calcul du taux d'erreur
     for i in range(0, 10):
-        temp = np.subtract(XRed1,moy[i])*np.subtract(XRed1,moy[i])
+        temp = np.subtract(devMat,moy[i])*np.subtract(devMat,moy[i])
         dist[i] = np.sum(temp, axis=1)
             
     resultat = np.argmin(dist, axis = 0)
     nberreur = sum(resultat != lbl1)
 
     # affichage du taux d'erreur
-    printErr(nberreur, XRed1.shape[0])
-    return precision(nberreur*100, XRed1.shape[0]), resultat
+    printErr(nberreur, devMat.shape[0])
+    return precision(nberreur*100, devMat.shape[0]), resultat
 
 # prediction de classes par le plus proche voisin
 def predictPPVSimple():
@@ -156,6 +153,32 @@ def predictPPV(p):
     
     return precision(nberreur*100, XRed1.shape[0]), resultat
 
+def supprVarianceInf(val=0, trainMat=X0, devMat=X1):
+    # varTrainMat contient les variances d'entrainement (784,)
+    varTrainMat =np.var(trainMat, axis=0)
+    
+    # varTrainMat contient les variances de developpement (784,)
+    varDevMat =np.var(devMat, axis = 0)
+    
+    # tableaux des indices constants dans la matrice de developpement et d'entrainement
+    trainKeep = varTrainMat>val
+    devKeep = varDevMat>val
+    
+    # keepBoth contient les indices des luminosités qui sont constantes dans la matrice de developpement et d'entrainement
+    keepBoth = devKeep[devKeep==trainKeep]
+    
+    # On reduit la matrice de developpement et d'entrainement pour avoir la même taille que les valeurs constantes
+    trainMatKeep = trainMat[:,devKeep==trainKeep]
+    trainDevKeep = devMat[:,devKeep==trainKeep]
+       
+    # On ne garde que les valeurs non constantes de la matrice d'entrainement
+    noConstTrainMat = trainMatKeep[:,keepBoth]
+    
+    # On ne garde que les valeurs non constantes de la matrice de developpement
+    noConstDevMat = trainDevKeep[:,keepBoth]
+    
+    return noConstTrainMat, noConstDevMat
+
 def confmat(true, pred):
     dim = max(pred)+1
     z = dim*true + pred
@@ -168,8 +191,10 @@ def confmat(true, pred):
     zcount_reshaped_sumligne = np.sum(zcount_reshaped, axis=0)
     
     for i in range(0,zcount_reshaped_sumcolonne.shape[0]):
-        valeur_precision = np.diag(zcount_reshaped)/float(zcount_reshaped_sumcolonne[i])  # colonne (precision)
-        valeur_rappel = np.diag(zcount_reshaped)/float(zcount_reshaped_sumligne[i])  # ligne (rappel)
+        # colonne (precision)
+        valeur_precision = np.diag(zcount_reshaped)/float(zcount_reshaped_sumcolonne[i])  
+        # ligne (rappel)
+        valeur_rappel = np.diag(zcount_reshaped)/float(zcount_reshaped_sumligne[i])  
     
     print("Matrice de confusion")
     print(zcount_reshaped)
@@ -181,22 +206,40 @@ def confmat(true, pred):
     print(valeur_rappel)
 
 def main():  
-    # DMIN sans ACP :
+    
+    #print("DMIN normal (sans traitement)")
+    #print X0.shape
+    #print X1.shape
     #t1 = np.datetime64(dt.datetime.now())
-    #res, prediction = predictMoySimple()
+    #res, prediction = predictMoy(X0, X1)
     #t2 = np.datetime64(dt.datetime.now())
     #print ("Temps DMIN sans ACP : ", t2 - t1)
     #confmat(lbl1, prediction)
+   
+    #print("DMIN avec ACP")
+    #t5 = np.datetime64(dt.datetime.now())
+    #XRed0, XRed1, P = reduceMat(100, X0, X1)
+    #print XRed0.shape
+    #print XRed1.shape
+    #res, prediction = predictMoy(XRed0, XRed1)
+    #t6 = np.datetime64(dt.datetime.now())
+    #print ("Temps : ", t6 - t5)
+    #confmat(lbl1, prediction)
     
-    # DMIN avec plusieurs ACP
-    #tabPrecision = np.zeros(20)
-    #for i in range(10, 210, 10):
-    #    print("avec ", i, " vecteurs")
-    #    t5 = np.datetime64(dt.datetime.now())
-    #    tabPrecision[((i-10)/10)], res = predictMoy(i)
-    #    t6 = np.datetime64(dt.datetime.now())
-    #    print ("Temps : ", t6 - t5)
-
+    # DMIN en supprimant les valeurs constantes :
+    #print("DMIN avec suppression des valeurs constantes")
+    #noConstX0, noConstX1 = supprVarianceInf(0, X0, X1)
+    #print noConstX0.shape
+    #print noConstX1.shape
+    #res, prediction = predictMoy(noConstX0, noConstX1)
+    #confmat(lbl1, prediction)
+    
+    # 1PPV avec 1 ACP
+    # XRed0, XRed1, P = reduceMat(100, X0, X1)
+    #res, prediction = predictPPV(XRed0, XRed1)
+    #confmat(lbl1, prediction)
+    
+   
     # 1PPV sans ACP
     t3 = np.datetime64(dt.datetime.now())
     res, prediction = predictPPVSimple()
@@ -209,15 +252,15 @@ def main():
     #for i in range(10, 210, 10):
     #    print("avec ", i, " vecteurs")
     #    t7 = np.datetime64(dt.datetime.now())
-    #    tabPrecision[((i-10)/10)], res = predictPPV(i)
+    #    tabPrecision[((i-10)/10)], res = predictPPV(X0, X1)
     #    t8 = np.datetime64(dt.datetime.now())
     #    print ("Temps : ", t8 - t7)
-    
+
         
     #for i in range(500, 5000, 500):
     #    val = ((i-500)/500)+11
     #    print("avec ", i, " vecteurs")
-    #    tabPrecision[val], _unused = predictPPV(i)
+    #    tabPrecision[val], _unused = predictPPV(X0, X1)
    
     #plt.plot(tabPrecision)
     #plt.ylabel("Taux d'erreur")
