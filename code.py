@@ -56,29 +56,6 @@ def reduceMat(p, trainMat=X0, devMat=X1):
 
     return XRed0, XRed1, P
 
-def predictMoySimple():
-    
-    # entrainement
-    moy = moyenne(X0)
-
-    # definition des tableaux
-    dist = np.zeros((10, X1.shape[0]))
-    resultat = np.zeros(X1.shape[0], dtype = np.int)
-
-    nberreur = 0
-    # calcul du taux d'erreur
-    for i in range(0, 10):
-        temp = np.subtract(X1,moy[i])*np.subtract(X1,moy[i])
-        dist[i] = np.sum(temp, axis=1)
-            
-    resultat = np.argmin(dist, axis = 0)
-    nberreur = sum(resultat != lbl1)
-
-    # affichage du taux d'erreur
-    printErr(nberreur, X1.shape[0])
-    return precision(nberreur*100, X1.shape[0]), resultat
-
-
 # prediction de classes par la moyenne
 def predictMoy(trainMat=X0, devMat=X1):
 
@@ -207,8 +184,11 @@ def main():
     
     # PPV avec ACP
     print("PPV avec ACP")
+    t3 = np.datetime64(dt.datetime.now())
     XRed0, XRed1, P = reduceMat(100, X0, X1)
     res, prediction = predictPPV(XRed0, XRed1)
+    t4 = np.datetime64(dt.datetime.now())
+    print ("Temps PPV avec ACP : ", t4 - t3)
     confmat(lbl1, prediction)
     
     # PPV sans ACP
@@ -216,21 +196,16 @@ def main():
     t3 = np.datetime64(dt.datetime.now())
     res, prediction = predictPPV()
     t4 = np.datetime64(dt.datetime.now())
-    print ("Temps 1PPV sans ACP : ", t4 - t3)
+    print ("Temps PPV sans ACP : ", t4 - t3)
     confmat(lbl1, prediction)
     
     # DMIN en supprimant les valeurs constantes :
     print("PPV avec suppression des valeurs constantes")
-    noConstX0, noConstX1 = supprVarianceInf(0, X0, X1)
-    print noConstX0.shape
-    print noConstX1.shape
-    res, prediction = predictPPV(noConstX0, noConstX1)
-   
-    # 1PPV sans ACP
     t3 = np.datetime64(dt.datetime.now())
-    res, prediction = predictPPV()
+    noConstX0, noConstX1 = supprVarianceInf(0, X0, X1)
+    res, prediction = predictPPV(noConstX0, noConstX1)
     t4 = np.datetime64(dt.datetime.now())
-    print ("Temps 1PPV sans ACP : ", t4 - t3)
+    print ("Temps PPV en supprimant les valeurs constantes : ", t4 - t3)
     confmat(lbl1, prediction)
 
     # PPV avec plusieurs ACP
