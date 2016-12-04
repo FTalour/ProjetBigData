@@ -154,45 +154,90 @@ def confmat(true, pred):
     print(valeur_rappel)
 
 def main():  
+
+    # naive_bayes
+    from sklearn.naive_bayes import GaussianNB
+    gnb = GaussianNB()
+    data = X0
+    target = lbl0
+    y_pred = gnb.fit(data, target).predict(data)
+    print("Number of mislabeled points out of a total %d points : %d"
+            % (data.shape[0],(target != y_pred).sum()))
+    printErr((target != y_pred).sum(), data.shape[0])
+    confmat(target, y_pred)
     
-    #print("DMIN normal (sans traitement)")
-    #print X0.shape
-    #print X1.shape
-    #t1 = np.datetime64(dt.datetime.now())
-    #res, prediction = predictMoy(X0, X1)
-    #t2 = np.datetime64(dt.datetime.now())
-    #print ("Temps DMIN sans ACP : ", t2 - t1)
-    #confmat(lbl1, prediction)
-   
-    #print("DMIN avec ACP")
-    #t5 = np.datetime64(dt.datetime.now())
-    #XRed0, XRed1, P = reduceMat(100, X0, X1)
-    #print XRed0.shape
-    #print XRed1.shape
-    #res, prediction = predictMoy(XRed0, XRed1)
-    #t6 = np.datetime64(dt.datetime.now())
-    #print ("Temps : ", t6 - t5)
-    #confmat(lbl1, prediction)
+    data = X1
+    target = lbl1
+    y_pred = gnb.fit(data, target).predict(data)
+    print("Number of mislabeled points out of a total %d points : %d"
+            % (data.shape[0],(target != y_pred).sum()))
+    printErr((target != y_pred).sum(), data.shape[0])
+    confmat(target, y_pred)
+
+
+    '''
+    # PPV (ne marche pas)
+    from sklearn import neighbors
+    n_neighbors = 15
+    clf = neighbors.KNeighborsClassifier(n_neighbors, weights='uniform')
+    X = X0
+    y = lbl0
+    Z = clf.fit(X, y).predict(X)
+    print("Number of mislabeled points out of a total %d points : %d"
+            % (X.shape[0],(y != y_pred).sum()))
+    printErr((y != Z).sum(), X.shape[0])
+    confmat(y, y_pred)
+    '''
     
-    # DMIN en supprimant les valeurs constantes :
-    #print("DMIN avec suppression des valeurs constantes")
-    #noConstX0, noConstX1 = supprVarianceInf(0, X0, X1)
-    #print noConstX0.shape
-    #print noConstX1.shape
-    #res, prediction = predictMoy(noConstX0, noConstX1)
-    #confmat(lbl1, prediction)
-    
-    # PPV avec ACP
-    print("PPV avec ACP")
-    t3 = np.datetime64(dt.datetime.now())
-    XRed0, XRed1, P = reduceMat(100, X0, X1)
-    res, prediction = predictPPV(XRed0, XRed1)
-    t4 = np.datetime64(dt.datetime.now())
-    print ("Temps PPV avec ACP : ", t4 - t3)
+    '''
+    # DMIN normal (sans traitement)
+    print("DMIN sans ACP (sans traitement)")
+    print X0.shape
+    print X1.shape
+    t1 = np.datetime64(dt.datetime.now())
+    res, prediction = predictMoy(X0, X1)
+    t2 = np.datetime64(dt.datetime.now())
+    print ("Temps DMIN sans ACP : ", t2 - t1)
     confmat(lbl1, prediction)
     
-    # PPV sans ACP
+    # DMIN avec ACP
+    print("DMIN avec ACP")
+    t3 = np.datetime64(dt.datetime.now())
+    XRed0, XRed1, P = reduceMat(100, X0, X1)
+    print XRed0.shape
+    print XRed1.shape
+    res, prediction = predictMoy(XRed0, XRed1)
+    t4 = np.datetime64(dt.datetime.now())
+    print ("Temps : ", t4 - t3)
+    confmat(lbl1, prediction)
+    
+    # DMIN en supprimant les valeurs constantes
+    print("DMIN avec suppression des valeurs constantes")
+    t5 = np.datetime64(dt.datetime.now())
+    noConstX0, noConstX1 = supprVarianceInf(0, X0, X1)
+    print noConstX0.shape
+    print noConstX1.shape
+    res, prediction = predictMoy(noConstX0, noConstX1)
+    t6 = np.datetime64(dt.datetime.now())
+    print ("Temps PPV en supprimant les valeurs constantes : ", t6 - t5)
+    confmat(lbl1, prediction)
+    '''
+    
+    '''
+    # PPV avec ACP
+    print("PPV avec ACP")
+    t1 = np.datetime64(dt.datetime.now())
+    XRed0, XRed1, P = reduceMat(100, X0, X1)
+    print XRed0.shape
+    print XRed1.shape
+    res, prediction = predictPPV(XRed0, XRed1)
+    t2 = np.datetime64(dt.datetime.now())
+    print ("Temps PPV avec ACP : ", t2 - t1)
+    confmat(lbl1, prediction)
+    
+    # PPV sans ACP (sans traitement)
     print("PPV sans ACP")
+    
     t3 = np.datetime64(dt.datetime.now())
     res, prediction = predictPPV()
     t4 = np.datetime64(dt.datetime.now())
@@ -201,45 +246,56 @@ def main():
     
     # DMIN en supprimant les valeurs constantes :
     print("PPV avec suppression des valeurs constantes")
-    t3 = np.datetime64(dt.datetime.now())
+    t5 = np.datetime64(dt.datetime.now())
     noConstX0, noConstX1 = supprVarianceInf(0, X0, X1)
+    print noConstX0.shape
+    print noConstX1.shape
     res, prediction = predictPPV(noConstX0, noConstX1)
-    t4 = np.datetime64(dt.datetime.now())
-    print ("Temps PPV en supprimant les valeurs constantes : ", t4 - t3)
+    t6 = np.datetime64(dt.datetime.now())
+    print ("Temps PPV en supprimant les valeurs constantes : ", t6 - t5)
     confmat(lbl1, prediction)
+    '''
 
-    # PPV avec plusieurs ACP
-    #tabPrecision = np.zeros(20)
-    #for i in range(10, 210, 10):
-    #    print("avec ", i, " vecteurs")
-    #    t7 = np.datetime64(dt.datetime.now())
-    #    tabPrecision[((i-10)/10)], res = predictPPV(X0, X1)
-    #    t8 = np.datetime64(dt.datetime.now())
-    #    print ("Temps : ", t8 - t7)
+    '''
+    # PPV avec plusieurs ACP et affichage dans un graphique
+    tabPrecision = np.zeros(20)
+    for i in range(10, 210, 10):
+        print("avec ", i, " vecteurs")
+        t7 = np.datetime64(dt.datetime.now())
+        tabPrecision[((i-10)/10)], res = predictPPV(X0, X1)
+        t8 = np.datetime64(dt.datetime.now())
+        print ("Temps : ", t8 - t7)
 
         
-    #for i in range(500, 5000, 500):
-    #    val = ((i-500)/500)+11
-    #    print("avec ", i, " vecteurs")
-    #    tabPrecision[val], _unused = predictPPV(X0, X1)
+    for i in range(500, 5000, 500):
+        val = ((i-500)/500)+11
+        print("avec ", i, " vecteurs")
+        tabPrecision[val], _unused = predictPPV(X0, X1)
    
-    #plt.plot(tabPrecision)
-    #plt.ylabel("Taux d'erreur")
-    #plt.xlabel("Taille du vecteur choisi (/10)")
-    #plt.show()
+    plt.plot(tabPrecision)
+    plt.ylabel("Taux d'erreur")
+    plt.xlabel("Taille du vecteur choisi (/10)")
+    plt.show()
+    '''
 
+    '''
     # Sauvegarde du meilleur pourcentage
-    #np.save('test-1nn', res)
-    
+    np.save('test-1nn', res)
+    '''
+
+    '''
     # Afficher une image individuellement
-    #img = XRed0[0].reshape(p/10,10)
-    #plt.imshow(img, plt.cm.gray)
-    #plt.show()
-    
+    img = XRed0[0].reshape(p/10,10)
+    plt.imshow(img, plt.cm.gray)
+    plt.show()
+    '''
+
+    '''  
     # Afficher une image individuellement dans sa dimension initiale 28 x 28
-    #img = X0[0].reshape(28,28)
-    #plt.imshow(img, plt.cm.gray)
-    #plt.show()
+    img = X0[0].reshape(28,28)
+    plt.imshow(img, plt.cm.gray)
+    plt.show()
+    '''
 
 #fonction main
 if __name__ == "__main__":
