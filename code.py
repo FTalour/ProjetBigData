@@ -30,18 +30,25 @@ def printErr(nbErreur, size):
 	print("Taux erreur : {0}".format(precision(nbErreur*100.0, size)), '%')
     
 # moyenne de chaque ligne
-def moyenne(x):
+def moyenne_X_lbl(x=X0, lbl=lbl0):
     moy = np.zeros((10, x.shape[1]))
     for i in range(0, 10):
-        moy[i] = np.average(x[lbl0 == i,:], axis=0)
-    return moy    
+        moy[i] = np.average(x[lbl == i,:], axis=0)
+    return moy
+    
+# standart deviation de chaque ligne
+def variance_X_lbl(x=X0, lbl=lbl0):
+    var = np.zeros((10, x.shape[1]))
+    for i in range(0, 10):
+        var[i] = np.var(x[lbl == i,:], axis=0)
+    return var
 
 # 1PPV obtenir un sous-ensemble de la base d'apprentissage, on enlève p valeurs à x
 def trainPPV(x, p):
     return x[:,:p] 
 
 # ACP
-def reduceMat(p, trainMat=X0, devMat=X1):
+def reduceMat(p=100, trainMat=X0, devMat=X1):
 
     C = np.cov(trainMat, rowvar=0)
     v,w = np.linalg.eigh(C)
@@ -57,10 +64,10 @@ def reduceMat(p, trainMat=X0, devMat=X1):
     return XRed0, XRed1, P
 
 # prediction de classes par distance minimum
-def predictMoy(trainMat=X0, devMat=X1):
+def predictDMIN(trainMat=X0, devMat=X1):
 
     # entrainement
-    moy = moyenne(trainMat)
+    moy = moyenne_X_lbl(trainMat)
 
     # definition des tableaux
     dist = np.zeros((10, devMat.shape[0]))
@@ -69,8 +76,8 @@ def predictMoy(trainMat=X0, devMat=X1):
     nberreur = 0
     # calcul du taux d'erreur
     for i in range(0, 10):
-        temp = np.subtract(devMat,moy[i])*np.subtract(devMat,moy[i])
-        dist[i] = np.sum(temp, axis=1)
+        squareDst = np.subtract(devMat,moy[i])*np.subtract(devMat,moy[i])
+        dist[i] = np.sum(squareDst, axis=1)
             
     resultat = np.argmin(dist, axis = 0)
     nberreur = sum(resultat != lbl1)
@@ -79,23 +86,48 @@ def predictMoy(trainMat=X0, devMat=X1):
     printErr(nberreur, devMat.shape[0])
     return precision(nberreur*100, devMat.shape[0]), resultat
 
+# prediction de classes par distance minimum
+def predictDMINMahalanobisDiagonale(trainMat=X0, devMat=X1):
+
+    # entrainement
+    moy = moyenne_X_lbl(trainMat)
+
+    # definition des tableaux
+    dist = np.zeros((10, devMat.shape[0]))
+    resultat = np.zeros(devMat.shape[0], dtype = np.int)
+
+    # calcul de l'ecart type de chaque nombre
+    variance = variance_X_lbl(trainMat)
+    
+    nberreur = 0
+    # calcul du taux d'erreur
+    for i in range(0, 10):
+        squareDst = np.subtract(devMat,moy[i])*np.subtract(devMat,moy[i])/variance[i]
+        dist[i] = np.sqrt(np.sum(squareDst, axis=1))
+
+    resultat = np.argmin(dist, axis = 0)
+    nberreur = sum(resultat != lbl1)
+
+    # affichage du taux d'erreur
+    printErr(nberreur, devMat.shape[0])
+    return precision(nberreur*100, devMat.shape[0]), resultat
+
 # prediction de classes par le plus proche voisin
-def predictPPV(trainMat=X0, devMat=X1):
+def predict1PPV(trainMat=X0, devMat=X1):
     
     # definition des tableaux
     dist = np.zeros((devMat.shape[0], trainMat.shape[0]))
     resultat = np.zeros(devMat.shape[0], dtype = np.int)
     
     nberreur = 0
-    
     # calcul du taux d'erreur
     for i in range(devMat.shape[0]):
-        temp = np.subtract(devMat[i], trainMat)*np.subtract(devMat[i], trainMat)
-        dist[i] = np.sum(temp, axis = 1)
+        dst = np.subtract(devMat[i], trainMat)*np.subtract(devMat[i], trainMat)
+        dist[i] = np.sum(dst, axis = 1)
     
     resultat = lbl0[np.argmin(dist, axis = 1)]
     nberreur = sum(resultat != lbl1)
-            
+
     # affichage du taux d'erreur
     printErr(nberreur, devMat.shape[0])
     
@@ -118,7 +150,33 @@ def supprVarianceInf(val=0, trainMat=X0, devMat=X1):
     # On reduit la matrice de developpement et d'entrainement pour avoir la même taille que les valeurs constantes
     trainMatKeep = trainMat[:,devKeep==trainKeep]
     trainDevKeep = devMat[:,devKeep==trainKeep]
-       
+
+    # On ne garde que les valeurs non constantes de la matrice d'entrainement
+    noConstTrainMat = trainMatKeep[:,keepBoth]
+    
+    # On ne garde que les valeurs non constantes de la matrice de developpement
+    noConstDevMat = trainDevKeep[:,keepBoth]
+    
+    return noConstTrainMat, noConstDevMat
+    
+def supprStdInf(val=0, trainMat=X0, devMat=X1):
+    # varTrainMat contient les variances d'entrainement (784,)
+    varTrainMat =np.var(trainMat, axis=0)
+    
+    # varTrainMat contient les variances de developpement (784,)
+    varDevMat =np.var(devMat, axis = 0)
+    
+    # tableaux des indices constants dans la matrice de developpement et d'entrainement
+    trainKeep = varTrainMat>val
+    devKeep = varDevMat>val
+    
+    # keepBoth contient les indices des luminosités qui sont constantes dans la matrice de developpement et d'entrainement
+    keepBoth = devKeep[devKeep==trainKeep]
+    
+    # On reduit la matrice de developpement et d'entrainement pour avoir la même taille que les valeurs constantes
+    trainMatKeep = trainMat[:,devKeep==trainKeep]
+    trainDevKeep = devMat[:,devKeep==trainKeep]
+
     # On ne garde que les valeurs non constantes de la matrice d'entrainement
     noConstTrainMat = trainMatKeep[:,keepBoth]
     
@@ -127,15 +185,19 @@ def supprVarianceInf(val=0, trainMat=X0, devMat=X1):
     
     return noConstTrainMat, noConstDevMat
 
-# Calcul de la distance de Mahalanobis entre x et moyenne 
-def dstMahalanobis(x, mu):
-    epsilon = np.zeros(len(x))
-    epsilon += ((x-mu)*((x-mu).T))/len(x)
-    epsilonInv =  np.linalg.inv(epsilon)
-    ret = np.transpose(x-mu)*epsilonInv*(x-mu)
-    print(ret.shape)
-    print(ret)
-    retrun ret
+# Calcul de la distance de Mahalanobis entre x et moyenne sur x (ne marche pas)
+def dstMahalanobisDiagonale(x=X0):
+    D = np.zeros(x.shape[0])
+    mu = np.mean(x, axis=0)
+    variance = np.var(X0, axis = 0)
+    variance_inv = 1/variance
+    E = np.zeros((x.shape[1], x.shape[1]))
+    np.fill_diagonal(E, variance)
+    D = np.transpose(x-mu)*E*(x-mu)
+    #C = np.cov(x, rowvar=0)
+    #VI = np.linalg.inv(C) # numpy.linalg.linalg.LinAlgError: Singular matrix
+    #D = np.transpose(x-mu)*VI*(x-mu)
+    return D
 
 def confmat(true, pred):
     dim = max(pred)+1
@@ -163,8 +225,8 @@ def confmat(true, pred):
     print("Matrice de rappel")
     print(valeur_rappel)
 
-def main():  
-
+def main():
+    
     '''
     # naive_bayes
     # sur X0
@@ -195,7 +257,7 @@ def main():
     '''
 
     '''
-    # PPV (Mahalanobis diagonale) sans ACP
+    # 1PPV (Mahalanobis diagonale) sans ACP
     from sklearn import neighbors
     t1 = np.datetime64(dt.datetime.now())
     n_neighbors = 15
@@ -211,7 +273,8 @@ def main():
     confmat(y, Z)
     '''
     
-    # PPV (Mahalanobis diagonale) avec ACP
+    '''
+    # 1PPV (KNeighborsClassifier) avec ACP
     t1 = np.datetime64(dt.datetime.now())
     XRed0, XRed1, P = reduceMat(100, X0, X1)
     n_neighbors = 15
@@ -225,7 +288,7 @@ def main():
     printErr((y != Z).sum(), X.shape[0])
     print ("Temps Mahalanobis diagonale avec ACP : ", t2 - t1)
     confmat(y, Z)
-
+    '''
     
     '''
     # DMIN normal (sans traitement)
@@ -233,7 +296,7 @@ def main():
     print X0.shape
     print X1.shape
     t1 = np.datetime64(dt.datetime.now())
-    res, prediction = predictMoy(X0, X1)
+    res, prediction = predictDMIN(X0, X1)
     t2 = np.datetime64(dt.datetime.now())
     print ("Temps DMIN sans ACP : ", t2 - t1)
     confmat(lbl1, prediction)
@@ -244,7 +307,7 @@ def main():
     XRed0, XRed1, P = reduceMat(100, X0, X1)
     print XRed0.shape
     print XRed1.shape
-    res, prediction = predictMoy(XRed0, XRed1)
+    res, prediction = predictDMIN(XRed0, XRed1)
     t4 = np.datetime64(dt.datetime.now())
     print ("Temps : ", t4 - t3)
     confmat(lbl1, prediction)
@@ -255,31 +318,43 @@ def main():
     noConstX0, noConstX1 = supprVarianceInf(0, X0, X1)
     print noConstX0.shape
     print noConstX1.shape
-    res, prediction = predictMoy(noConstX0, noConstX1)
+    res, prediction = predictDMIN(noConstX0, noConstX1)
     t6 = np.datetime64(dt.datetime.now())
-    print ("Temps PPV en supprimant les valeurs constantes : ", t6 - t5)
+    print ("Temps 1PPV en supprimant les valeurs constantes : ", t6 - t5)
     confmat(lbl1, prediction)
     '''
     
     '''
-    # PPV avec ACP
+    # DMIN MahalanobisDiagonale en supprimant les valeurs constantes
+    print("DMINMahalanobisDiagonale avec suppression des valeurs constantes")
+    t5 = np.datetime64(dt.datetime.now())
+    noConstX0, noConstX1 = supprStdInf(0, X0, X1)
+    print noConstX0.shape
+    print noConstX1.shape
+    res, prediction = predictDMINMahalanobisDiagonale(noConstX0, noConstX1)
+    t6 = np.datetime64(dt.datetime.now())
+    print ("Temps 1PPV en supprimant les valeurs constantes : ", t6 - t5)
+    confmat(lbl1, prediction)
+    '''
+    
+    '''
+    # 1PPV avec ACP
     print("PPV avec ACP")
     t1 = np.datetime64(dt.datetime.now())
     XRed0, XRed1, P = reduceMat(100, X0, X1)
     print XRed0.shape
     print XRed1.shape
-    res, prediction = predictPPV(XRed0, XRed1)
+    res, prediction = predict1PPV(XRed0, XRed1)
     t2 = np.datetime64(dt.datetime.now())
-    print ("Temps PPV avec ACP : ", t2 - t1)
+    print ("Temps 1PPV avec ACP : ", t2 - t1)
     confmat(lbl1, prediction)
     
-    # PPV sans ACP (sans traitement)
+    # 1PPV sans ACP (sans traitement)
     print("PPV sans ACP")
-    
     t3 = np.datetime64(dt.datetime.now())
-    res, prediction = predictPPV()
+    res, prediction = predict1PPV()
     t4 = np.datetime64(dt.datetime.now())
-    print ("Temps PPV sans ACP : ", t4 - t3)
+    print ("Temps 1PPV sans ACP : ", t4 - t3)
     confmat(lbl1, prediction)
     
     # DMIN en supprimant les valeurs constantes :
@@ -288,19 +363,19 @@ def main():
     noConstX0, noConstX1 = supprVarianceInf(0, X0, X1)
     print noConstX0.shape
     print noConstX1.shape
-    res, prediction = predictPPV(noConstX0, noConstX1)
+    res, prediction = predict1PPV(noConstX0, noConstX1)
     t6 = np.datetime64(dt.datetime.now())
-    print ("Temps PPV en supprimant les valeurs constantes : ", t6 - t5)
+    print ("Temps 1PPV en supprimant les valeurs constantes : ", t6 - t5)
     confmat(lbl1, prediction)
     '''
 
     '''
-    # PPV avec plusieurs ACP et affichage dans un graphique
+    # 1PPV avec plusieurs ACP et affichage dans un graphique
     tabPrecision = np.zeros(20)
     for i in range(10, 210, 10):
         print("avec ", i, " vecteurs")
         t7 = np.datetime64(dt.datetime.now())
-        tabPrecision[((i-10)/10)], res = predictPPV(X0, X1)
+        tabPrecision[((i-10)/10)], res = predict1PPV(X0, X1)
         t8 = np.datetime64(dt.datetime.now())
         print ("Temps : ", t8 - t7)
 
@@ -308,7 +383,7 @@ def main():
     for i in range(500, 5000, 500):
         val = ((i-500)/500)+11
         print("avec ", i, " vecteurs")
-        tabPrecision[val], _unused = predictPPV(X0, X1)
+        tabPrecision[val], _unused = predict1PPV(X0, X1)
    
     plt.plot(tabPrecision)
     plt.ylabel("Taux d'erreur")
