@@ -56,7 +56,7 @@ def reduceMat(p, trainMat=X0, devMat=X1):
 
     return XRed0, XRed1, P
 
-# prediction de classes par la moyenne
+# prediction de classes par distance minimum
 def predictMoy(trainMat=X0, devMat=X1):
 
     # entrainement
@@ -127,6 +127,16 @@ def supprVarianceInf(val=0, trainMat=X0, devMat=X1):
     
     return noConstTrainMat, noConstDevMat
 
+# Calcul de la distance de Mahalanobis entre x et moyenne 
+def dstMahalanobis(x, mu):
+    epsilon = np.zeros(len(x))
+    epsilon += ((x-mu)*((x-mu).T))/len(x)
+    epsilonInv =  np.linalg.inv(epsilon)
+    ret = np.transpose(x-mu)*epsilonInv*(x-mu)
+    print(ret.shape)
+    print(ret)
+    retrun ret
+
 def confmat(true, pred):
     dim = max(pred)+1
     z = dim*true + pred
@@ -157,35 +167,63 @@ def main():
 
     '''
     # naive_bayes
+    # sur X0
     from sklearn.naive_bayes import GaussianNB
+    t1 = np.datetime64(dt.datetime.now())
     gnb = GaussianNB()
     data = X0
     target = lbl0
     y_pred = gnb.fit(data, target).predict(data)
+    t2 = np.datetime64(dt.datetime.now())
     print("Number of mislabeled points out of a total %d points : %d"
             % (data.shape[0],(target != y_pred).sum()))
     printErr((target != y_pred).sum(), data.shape[0])
+    print ("Temps Naive Bayes sans ACP sur X0 : ", t2 - t1)
     confmat(target, y_pred)
     
+    # sur X1
+    t1 = np.datetime64(dt.datetime.now())
     data = X1
     target = lbl1
     y_pred = gnb.fit(data, target).predict(data)
+    print ("Temps Naive Bayes sans ACP : ", t2 - t1)
     print("Number of mislabeled points out of a total %d points : %d"
             % (data.shape[0],(target != y_pred).sum()))
     printErr((target != y_pred).sum(), data.shape[0])
+    print ("Temps Naive Bayes sans ACP sur X1 : ", t2 - t1)
     confmat(target, y_pred)
     '''
 
-    # PPV (ne marche pas)
+    '''
+    # PPV (Mahalanobis diagonale) sans ACP
     from sklearn import neighbors
+    t1 = np.datetime64(dt.datetime.now())
     n_neighbors = 15
     clf = neighbors.KNeighborsClassifier(n_neighbors, weights='uniform')
     X = X0
     y = lbl0
     Z = clf.fit(X, y).predict(X)
+    t2 = np.datetime64(dt.datetime.now())
     print("Number of mislabeled points out of a total %d points : %d"
             % (X.shape[0],(y != Z).sum()))
     printErr((y != Z).sum(), X.shape[0])
+    print ("Temps Mahalanobis diagonale sans ACP : ", t2 - t1)
+    confmat(y, Z)
+    '''
+    
+    # PPV (Mahalanobis diagonale) avec ACP
+    t1 = np.datetime64(dt.datetime.now())
+    XRed0, XRed1, P = reduceMat(100, X0, X1)
+    n_neighbors = 15
+    clf = neighbors.KNeighborsClassifier(n_neighbors, weights='uniform')
+    X = XRed0
+    y = lbl0
+    Z = clf.fit(X, y).predict(X)
+    t2 = np.datetime64(dt.datetime.now())
+    print("Number of mislabeled points out of a total %d points : %d"
+            % (X.shape[0],(y != Z).sum()))
+    printErr((y != Z).sum(), X.shape[0])
+    print ("Temps Mahalanobis diagonale avec ACP : ", t2 - t1)
     confmat(y, Z)
 
     
